@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generador de Presupuestos – Grupo Europa</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<style>
+  :root {
+    --blue: #4F84B5;
+    --blue-dark: #3a6a96;
+    --blue-light: #e8f0f8;
+    --blue-pale: #f5f8fc;
+  }
+  body { background: #f0f4f8; font-family: 'Segoe UI', Calibri, sans-serif; }
+
+  /* Header */
+  .app-header {
+    background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 100%);
+    color: white; padding: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+  .app-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+  .app-header p  { margin: 4px 0 0; opacity: .85; font-size: .9rem; }
+
+  /* Cards / sections */
+  .section-card {
+    background: white; border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.08); margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .section-header {
+    background: var(--blue-light); padding: 14px 20px;
+    border-bottom: 2px solid var(--blue); display: flex; align-items: center; gap: 10px;
+  }
+  .section-header i { color: var(--blue); font-size: 1.2rem; }
+  .section-header h2 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--blue-dark); }
+  .section-body { padding: 20px; }
+
+  /* Form controls */
+  .form-label { font-size: .85rem; font-weight: 600; color: #555; margin-bottom: 4px; }
+  .form-control, .form-select {
+    border-radius: 8px; border-color: #cdd8e8;
+    font-size: .9rem; transition: border-color .2s, box-shadow .2s;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: var(--blue); box-shadow: 0 0 0 3px rgba(79,132,181,.15);
+  }
+
+  /* Partidas table */
+  #tabla-partidas { font-size: .875rem; }
+  #tabla-partidas thead th {
+    background: var(--blue); color: white; font-weight: 600;
+    border: none; padding: 10px 8px; white-space: nowrap;
+  }
+  #tabla-partidas tbody tr { transition: background .15s; }
+  #tabla-partidas tbody tr:hover { background: var(--blue-pale); }
+  #tabla-partidas td { padding: 6px 6px; vertical-align: middle; border-color: #e0e8f0; }
+  .col-desc  { min-width: 280px; }
+  .col-code  { width: 130px; }
+  .col-unit  { width: 80px; }
+  .col-qty   { width: 80px; }
+  .col-price { width: 110px; }
+  .col-total { width: 110px; }
+  .col-del   { width: 40px; }
+  .total-cell { font-weight: 700; color: var(--blue-dark); }
+
+  /* Totals bar */
+  .totals-bar {
+    background: var(--blue-pale); border: 1px solid #cdd8e8;
+    border-radius: 8px; padding: 12px 16px; margin-top: 12px;
+  }
+  .totals-bar .total-final { font-size: 1.2rem; font-weight: 800; color: var(--blue-dark); }
+
+  /* Buttons */
+  .btn-primary { background: var(--blue); border-color: var(--blue); }
+  .btn-primary:hover { background: var(--blue-dark); border-color: var(--blue-dark); }
+  .btn-generate {
+    font-size: 1.1rem; padding: 14px 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
+    border: none; box-shadow: 0 4px 14px rgba(79,132,181,.4);
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(79,132,181,.5); }
+
+  /* Warning banner */
+  .no-template { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px 16px; }
+
+  /* Spinner overlay */
+  #overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(15,25,50,.6); z-index: 9999;
+    flex-direction: column; align-items: center; justify-content: center; color: white;
+  }
+  #overlay.show { display: flex; }
+  #overlay .spinner-border { width: 3.5rem; height: 3.5rem; border-width: .35rem; }
+  #overlay p { margin-top: 16px; font-size: 1.1rem; }
+
+  /* Tarifa badge */
+  .tarifa-badge {
+    font-size: .75rem; color: #fff; background: #28a745;
+    border-radius: 4px; padding: 2px 6px; margin-left: 6px; display: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="app-header">
+  <div class="container">
+    <div class="d-flex align-items-center gap-3">
+      <i class="bi bi-file-earmark-text-fill" style="font-size:2rem"></i>
+      <div>
+        <h1>Generador de Presupuestos de Obra</h1>
+        <p>Grupo Europa &nbsp;·&nbsp; Acometidas Europa S.L. &nbsp;·&nbsp; 91 386 21 12</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div id="overlay">
+  <div class="spinner-border text-light"></div>
+  <p>Generando documentos, espera un momento…</p>
+</div>
+
+<div class="container py-4" style="max-width:900px">
+
+  {% if not template_ok %}
+  <div class="no-template mb-4">
+    <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+    <strong>Falta la plantilla Word.</strong> Ejecuta primero:
+    <code>python download_templates.py</code>
+    — El Excel de valoración y el HTML sí se generarán.
+  </div>
+  {% endif %}
+
+  <form action="/generar" method="POST" id="form-presupuesto">
+
+    <!-- ① Datos del presupuesto -->
+    <div class="section-card">
+      <div class="section-header">
+        <i class="bi bi-clipboard2-data"></i>
+        <h2>① Datos del presupuesto</h2>
+      </div>
+      <div class="section-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Nº de contrato *</label>
+            <input type="text" name="num_contrato" class="form-control" placeholder="Ej: 4680/26" required>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Nombre de la obra / dirección *</label>
+            <input type="text" name="obra" class="form-control" placeholder="Ej: C/ Santa Catalina Labouré 21, Madrid" required>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Tipo de servicio</label>
+            <input type="text" name="servicio" class="form-control" placeholder="Ej: Saneamiento y Pocería">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Provincia</label>
+            <input type="text" name="provincia" class="form-control" value="Madrid">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Fecha del presupuesto</label>
+            <input type="date" name="fecha_contrato" class="form-control" value="{{ today }}">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② Datos del cliente -->
+    <div class="section-card">
+      <div class="section-header">
+        <i class="bi bi-building"></i>
+        <h2>② Datos del cliente</h2>
+      </div>
+      <div class="section-body">
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label class="form-label">Nombre del cliente / comunidad *</label>
+            <input type="text" name="cliente_nombre" class="form-control" placeholder="Ej: Comunidad de Propietarios C/ Mayor 10" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Teléfono</label>
+            <input type="text" name="cliente_tel" class="form-control" placeholder="91 234 56 78">
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Dirección del cliente</label>
+            <input type="text" name="cliente_dir" class="form-control" placeholder="C/ Mayor 10, 28013 Madrid">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Email</label>
+            <input type="email" name="cliente_email" class="form-control" placeholder="admin@comunidad.es">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Administrador / promotor <span class="text-muted fw-normal">(si aplica)</span></label>
+            <input type="text" name="administracion" class="form-control" placeholder="Ej: Gesfinc Administración">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ Condiciones económicas -->
+    <div class="section-card">
+      <div class="section-header">
+        <i class="bi bi-calendar3"></i>
+        <h2>③ Condiciones económicas</h2>
+      </div>
+      <div class="section-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Plazo de ejecución (días)</label>
+            <input type="number" name="plazo" class="form-control" value="30" min="1">
+          </div>
+          <div class="col-md-9">
+            <label class="form-label">Forma de pago</label>
+            <input type="text" name="forma_pago" class="form-control" value="50% al inicio de los trabajos, 50% a la finalización">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ Textos técnicos -->
+    <div class="section-card">
+      <div class="section-header">
+        <i class="bi bi-file-text"></i>
+        <h2>④ Textos técnicos</h2>
+      </div>
+      <div class="section-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Informe técnico <span class="text-muted fw-normal">(descripción del problema)</span></label>
+            <textarea name="informe" class="form-control" rows="2" placeholder="Ej: Se han detectado filtraciones en la red de saneamiento del edificio sito en la calle..."></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Solución adoptada</label>
+            <textarea name="solucion" class="form-control" rows="2" placeholder="Ej: Sustitución de los tramos afectados de la red de saneamiento horizontal..."></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Memoria técnica <span class="text-muted fw-normal">(descripción de los trabajos a realizar)</span></label>
+            <textarea name="memoria" class="form-control" rows="3" placeholder="Ej: Los trabajos incluyen la demolición del firme existente, excavación..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑤ Partidas de obra -->
+    <div class="section-card">
+      <div class="section-header">
+        <i class="bi bi-list-check"></i>
+        <h2>⑤ Partidas de obra</h2>
+      </div>
+      <div class="section-body">
+        <p class="text-muted small mb-3">
+          <i class="bi bi-lightbulb text-warning"></i>
+          Escribe un <strong>código de tarifa</strong> (ej: <code>ARQ-4040-50</code>) y la descripción y precio se rellenan solos.
+          O escribe directamente la descripción a mano.
+        </p>
+
+        <div class="table-responsive">
+          <table class="table table-bordered" id="tabla-partidas">
+            <thead>
+              <tr>
+                <th class="col-code">Código tarifa</th>
+                <th class="col-desc">Descripción *</th>
+                <th class="col-unit">Unidad</th>
+                <th class="col-qty">Cant.</th>
+                <th class="col-price">Precio (€)</th>
+                <th class="col-total">Total</th>
+                <th class="col-del"></th>
+              </tr>
+            </thead>
+            <tbody id="tbody-partidas">
+              <!-- Rows added by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="addRow()">
+          <i class="bi bi-plus-circle"></i> Añadir partida
+        </button>
+
+        <!-- Totals -->
+        <div class="totals-bar mt-3">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span class="text-muted">
+              <span id="n-partidas">0</span> partida(s)
+            </span>
+            <div class="text-end">
+              <div class="text-muted small">Total sin IVA: <strong id="total-sin-iva">0,00 €</strong></div>
+              <div class="text-muted small">IVA (21%): <strong id="total-iva">0,00 €</strong></div>
+              <div class="total-final">TOTAL: <span id="total-con-iva">0,00 €</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="text-center pb-4">
+      <button type="submit" class="btn btn-primary btn-generate" onclick="showOverlay()">
+        <i class="bi bi-file-earmark-arrow-down me-2"></i>
+        Generar documentos
+      </button>
+      <p class="text-muted small mt-2">Se generarán Word, Excel, HTML y PDF automáticamente</p>
+    </div>
+
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let rowIndex = 0;
+
+function addRow(desc='', unit='PA', qty=1, price=0) {
+  const i = rowIndex++;
+  const total = (qty * price).toFixed(2);
+  const tr = document.createElement('tr');
+  tr.id = `row-${i}`;
+  tr.innerHTML = `
+    <td>
+      <input type="text" class="form-control form-control-sm tarifa-code"
+             placeholder="ARQ-..." data-row="${i}"
+             onblur="lookupTarifa(this, ${i})">
+    </td>
+    <td>
+      <input type="text" name="item_desc_${i}" class="form-control form-control-sm"
+             placeholder="Descripción de la partida" required value="${esc(desc)}">
+      <span class="tarifa-badge" id="badge-${i}"><i class="bi bi-check2"></i> Tarifa</span>
+    </td>
+    <td>
+      <select name="item_unit_${i}" class="form-select form-select-sm">
+        ${['PA','ud','ml','m²','m³','kg','h'].map(u => `<option${u===unit?' selected':''}>${u}</option>`).join('')}
+      </select>
+    </td>
+    <td>
+      <input type="number" name="item_qty_${i}" class="form-control form-control-sm"
+             value="${qty}" min="0" step="any" oninput="calcRow(${i})">
+    </td>
+    <td>
+      <input type="number" name="item_price_${i}" class="form-control form-control-sm"
+             value="${price}" min="0" step="any" oninput="calcRow(${i})">
+    </td>
+    <td class="total-cell text-end" id="total-${i}">${fmtEur(total)}</td>
+    <td>
+      <button type="button" class="btn btn-sm btn-outline-danger" onclick="delRow(${i})">
+        <i class="bi bi-trash3"></i>
+      </button>
+    </td>`;
+  document.getElementById('tbody-partidas').appendChild(tr);
+  updateTotals();
+}
+
+function delRow(i) {
+  const row = document.getElementById(`row-${i}`);
+  if (row) row.remove();
+  updateTotals();
+}
+
+function calcRow(i) {
+  const qty   = parseFloat(document.querySelector(`[name="item_qty_${i}"]`).value) || 0;
+  const price = parseFloat(document.querySelector(`[name="item_price_${i}"]`).value) || 0;
+  document.getElementById(`total-${i}`).textContent = fmtEur((qty * price).toFixed(2));
+  updateTotals();
+}
+
+function updateTotals() {
+  const tbody = document.getElementById('tbody-partidas');
+  const rows = tbody.querySelectorAll('tr');
+  let subtotal = 0;
+  rows.forEach(tr => {
+    const i = tr.id.replace('row-','');
+    const qty   = parseFloat(tr.querySelector(`[name="item_qty_${i}"]`)?.value) || 0;
+    const price = parseFloat(tr.querySelector(`[name="item_price_${i}"]`)?.value) || 0;
+    subtotal += qty * price;
+  });
+  const iva  = subtotal * 0.21;
+  const total = subtotal + iva;
+  document.getElementById('n-partidas').textContent = rows.length;
+  document.getElementById('total-sin-iva').textContent = fmtEur(subtotal.toFixed(2));
+  document.getElementById('total-iva').textContent     = fmtEur(iva.toFixed(2));
+  document.getElementById('total-con-iva').textContent = fmtEur(total.toFixed(2));
+}
+
+async function lookupTarifa(input, i) {
+  const code = input.value.trim().toUpperCase();
+  if (!code) return;
+  try {
+    const res = await fetch(`/api/tarifa/${encodeURIComponent(code)}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.descripcion) {
+      document.querySelector(`[name="item_desc_${i}"]`).value  = data.descripcion;
+      document.querySelector(`[name="item_price_${i}"]`).value = data.precio || 0;
+      const uSelect = document.querySelector(`[name="item_unit_${i}"]`);
+      if (data.unidad) {
+        [...uSelect.options].forEach(o => o.selected = (o.value === data.unidad));
+      }
+      document.getElementById(`badge-${i}`).style.display = 'inline';
+      calcRow(i);
+    }
+  } catch(e) {}
+}
+
+function fmtEur(n) {
+  return parseFloat(n).toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+}
+
+function esc(s) {
+  return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+function showOverlay() {
+  const tbody = document.getElementById('tbody-partidas');
+  if (!tbody.querySelectorAll('tr').length) {
+    alert('Añade al menos una partida de obra antes de generar.');
+    return false;
+  }
+  document.getElementById('overlay').classList.add('show');
+}
+
+// Start with 3 empty rows
+addRow(); addRow(); addRow();
+</script>
+</body>
+</html>
