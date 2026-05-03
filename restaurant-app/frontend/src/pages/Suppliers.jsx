@@ -6,73 +6,66 @@ const empty = { name: '', cif: '', address: '', phone: '', email: '' };
 
 export default function Suppliers() {
   const [suppliers, setSuppliers] = useState([]);
-  const [modal, setModal] = useState(null);
-  const [form, setForm] = useState(empty);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [modal, setModal]         = useState(null);
+  const [form, setForm]           = useState(empty);
+  const [loading, setLoading]     = useState(true);
+  const [saving, setSaving]       = useState(false);
 
   const load = () => suppliersApi.list().then(r => { setSuppliers(r.data); setLoading(false); });
   useEffect(() => { load(); }, []);
-
-  const openCreate = () => { setForm(empty); setModal('create'); };
-  const openEdit = (s) => { setForm(s); setModal('edit'); };
 
   const save = async () => {
     if (!form.name.trim()) return;
     setSaving(true);
     try {
-      if (modal === 'edit') await suppliersApi.update(form.id, form);
-      else await suppliersApi.create(form);
-      setModal(null);
-      load();
+      if (form.id) await suppliersApi.update(form.id, form);
+      else         await suppliersApi.create(form);
+      setModal(null); load();
     } finally { setSaving(false); }
   };
 
-  const remove = async (id) => {
+  const remove = async id => {
     if (!confirm('¿Eliminar este proveedor?')) return;
-    await suppliersApi.delete(id);
-    load();
+    await suppliersApi.delete(id); load();
   };
 
-  const f = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }));
+  const f = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
 
-  if (loading) return <div className="page"><div className="loading">Cargando...</div></div>;
+  if (loading) return <div className="page"><div className="loading"><div className="spinner spinner-dark" /><p>Cargando proveedores...</p></div></div>;
 
   return (
     <div className="page">
-      <div className="page-header">
-        <h1 className="page-title">🚚 Proveedores</h1>
-        <button className="btn btn-primary" onClick={openCreate}>+ Nuevo proveedor</button>
+      <div className="page-title-section">
+        <div>
+          <h1 className="page-title">🚚 Proveedores</h1>
+          <p className="page-desc">{suppliers.length} proveedores registrados</p>
+        </div>
+        <button className="btn btn-primary" onClick={() => { setForm(empty); setModal('form'); }}>+ Nuevo proveedor</button>
       </div>
 
       <div className="card">
         {suppliers.length === 0 ? (
-          <div className="empty">No hay proveedores registrados. ¡Añade el primero!</div>
+          <div className="empty"><div className="empty-icon">🚚</div><p>No hay proveedores. Añade el primero.</p></div>
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>CIF/NIF</th>
-                  <th>Teléfono</th>
-                  <th>Email</th>
-                  <th>Dirección</th>
-                  <th></th>
-                </tr>
+                <tr><th>Proveedor</th><th>CIF / NIF</th><th>Teléfono</th><th>Email</th><th>Dirección</th><th></th></tr>
               </thead>
               <tbody>
                 {suppliers.map(s => (
                   <tr key={s.id}>
-                    <td><strong>{s.name}</strong></td>
-                    <td>{s.cif || '—'}</td>
-                    <td>{s.phone || '—'}</td>
-                    <td>{s.email || '—'}</td>
-                    <td>{s.address || '—'}</td>
                     <td>
-                      <div className="flex gap-2">
-                        <button className="btn btn-secondary btn-sm" onClick={() => openEdit(s)}>Editar</button>
-                        <button className="btn btn-danger btn-sm" onClick={() => remove(s.id)}>Eliminar</button>
+                      <div className="font-semibold">{s.name}</div>
+                    </td>
+                    <td className="text-muted">{s.cif || '—'}</td>
+                    <td>{s.phone ? <a href={`tel:${s.phone}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}>{s.phone}</a> : '—'}</td>
+                    <td>{s.email ? <a href={`mailto:${s.email}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}>{s.email}</a> : '—'}</td>
+                    <td className="text-sm text-muted">{s.address || '—'}</td>
+                    <td>
+                      <div className="flex gap-1">
+                        <button className="btn btn-secondary btn-sm" onClick={() => { setForm(s); setModal('form'); }}>Editar</button>
+                        <button className="btn btn-ghost btn-sm btn-icon" onClick={() => remove(s.id)}>🗑</button>
                       </div>
                     </td>
                   </tr>
@@ -83,22 +76,19 @@ export default function Suppliers() {
         )}
       </div>
 
-      {modal && (
-        <Modal
-          title={modal === 'edit' ? 'Editar proveedor' : 'Nuevo proveedor'}
+      {modal === 'form' && (
+        <Modal title={form.id ? 'Editar proveedor' : 'Nuevo proveedor'} subtitle="Datos de contacto del proveedor"
           onClose={() => setModal(null)}
-          footer={
-            <>
-              <button className="btn btn-secondary" onClick={() => setModal(null)}>Cancelar</button>
-              <button className="btn btn-primary" onClick={save} disabled={saving}>
-                {saving ? 'Guardando...' : 'Guardar'}
-              </button>
-            </>
-          }
+          footer={<>
+            <button className="btn btn-secondary" onClick={() => setModal(null)}>Cancelar</button>
+            <button className="btn btn-primary" onClick={save} disabled={saving}>
+              {saving ? <><span className="spinner" /> Guardando...</> : 'Guardar proveedor'}
+            </button>
+          </>}
         >
           <div className="form-group">
-            <label>Nombre *</label>
-            <input value={form.name} onChange={f('name')} placeholder="Nombre del proveedor" />
+            <label>Nombre del proveedor *</label>
+            <input value={form.name} onChange={f('name')} placeholder="Ej: Pescados García S.L." />
           </div>
           <div className="form-row">
             <div className="form-group">
