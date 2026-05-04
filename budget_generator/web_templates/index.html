@@ -7,87 +7,112 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <style>
-  :root { --blue:#4F84B5; --blue-dark:#3a6a96; --blue-light:#e8f0f8; --blue-pale:#f5f8fc; }
-  body  { background:#f0f4f8; font-family:'Segoe UI',Calibri,sans-serif; }
+  :root { --blue:#4F84B5; --blue-dark:#3a6a96; --blue-light:#e8f0f8; }
+  body { background:#f0f4f8; font-family:'Segoe UI',Calibri,sans-serif; margin:0; }
 
   .app-header {
-    background:linear-gradient(135deg,var(--blue-dark) 0%,var(--blue) 100%);
-    color:white; padding:20px 0; box-shadow:0 2px 8px rgba(0,0,0,.2);
+    background:linear-gradient(135deg,var(--blue-dark),var(--blue));
+    color:white; padding:16px 0; box-shadow:0 2px 8px rgba(0,0,0,.2); position:sticky; top:0; z-index:100;
   }
-  .app-header h1 { font-size:1.5rem; font-weight:700; margin:0; }
-  .app-header p  { margin:4px 0 0; opacity:.85; font-size:.9rem; }
+  .app-header h1 { font-size:1.3rem; font-weight:700; margin:0; }
+  .app-header p  { margin:2px 0 0; opacity:.85; font-size:.82rem; }
 
-  /* Type selector cards */
+  /* Progress */
+  .progress-wrap { height:4px; background:#cdd8e8; }
+  .progress-fill { height:100%; background:var(--blue); transition:width .5s ease; }
+
+  /* Chat layout */
+  .chat-wrap { max-width:700px; margin:0 auto; padding:24px 16px 120px; }
+
+  /* Bot message */
+  .msg-bot { display:flex; align-items:flex-start; gap:10px; margin-bottom:16px; }
+  .msg-bot .av {
+    width:34px; height:34px; background:var(--blue); color:white;
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:.75rem; font-weight:800; flex-shrink:0; margin-top:2px;
+  }
+  .msg-bot .bub {
+    background:white; border-radius:2px 14px 14px 14px;
+    padding:12px 16px; box-shadow:0 1px 4px rgba(0,0,0,.08);
+    max-width:90%; font-size:.92rem; line-height:1.5;
+  }
+
+  /* User response */
+  .msg-user { display:flex; justify-content:flex-end; margin-bottom:14px; }
+  .msg-user .bub {
+    background:var(--blue); color:white; border-radius:14px 2px 14px 14px;
+    padding:10px 14px; max-width:75%; font-size:.88rem;
+  }
+
+  /* Input panel */
+  .input-panel {
+    background:white; border-radius:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,.09);
+    padding:20px; margin-left:44px; margin-bottom:16px;
+  }
+
+  /* Type cards */
+  .type-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:8px; }
   .type-card {
-    border:2px solid #cdd8e8; border-radius:12px; padding:14px 12px;
-    cursor:pointer; text-align:center; background:white;
-    transition:border-color .2s, box-shadow .2s, transform .15s;
+    border:2px solid #cdd8e8; border-radius:10px; padding:10px 6px;
+    cursor:pointer; text-align:center; background:white; transition:all .2s;
+    user-select:none;
   }
-  .type-card:hover { border-color:var(--blue); box-shadow:0 4px 12px rgba(79,132,181,.2); transform:translateY(-2px); }
-  .type-card.selected { border-color:var(--blue); background:var(--blue-light); box-shadow:0 4px 12px rgba(79,132,181,.3); }
-  .type-card .tc-icon { font-size:2rem; margin-bottom:6px; }
-  .type-card .tc-name { font-size:.8rem; font-weight:700; color:var(--blue-dark); line-height:1.2; }
-  .type-card .tc-badge { font-size:.7rem; color:#666; margin-top:3px; }
-
-  /* Section cards */
-  .section-card { background:white; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.08); margin-bottom:20px; overflow:hidden; }
-  .section-header { background:var(--blue-light); padding:14px 20px; border-bottom:2px solid var(--blue); display:flex; align-items:center; gap:10px; }
-  .section-header i { color:var(--blue); font-size:1.2rem; }
-  .section-header h2 { margin:0; font-size:1rem; font-weight:700; color:var(--blue-dark); }
-  .section-body { padding:20px; }
+  .type-card:hover { border-color:var(--blue); box-shadow:0 3px 10px rgba(79,132,181,.2); transform:translateY(-2px); }
+  .type-card.selected { border-color:var(--blue); background:var(--blue-light); }
+  .type-card .tc-icon { font-size:1.6rem; }
+  .type-card .tc-name { font-size:.7rem; font-weight:700; color:var(--blue-dark); line-height:1.2; margin-top:4px; }
 
   /* Form controls */
-  .form-label { font-size:.85rem; font-weight:600; color:#555; margin-bottom:4px; }
-  .form-control, .form-select { border-radius:8px; border-color:#cdd8e8; font-size:.9rem; }
+  .form-label { font-size:.82rem; font-weight:600; color:#555; margin-bottom:3px; }
+  .form-control, .form-select { border-radius:8px; border-color:#cdd8e8; font-size:.88rem; }
   .form-control:focus, .form-select:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(79,132,181,.15); }
 
-  /* Partidas table */
-  .tabla-partidas { font-size:.875rem; }
-  .tabla-partidas thead th { background:var(--blue); color:white; font-weight:600; border:none; padding:10px 8px; white-space:nowrap; }
-  .tabla-partidas tbody tr { transition:background .15s; }
-  .tabla-partidas tbody tr:hover { background:var(--blue-pale); }
-  .tabla-partidas td { padding:6px 6px; vertical-align:middle; border-color:#e0e8f0; }
-  .col-code { width:130px; }
-  .col-unit { width:80px; }
-  .col-qty  { width:80px; }
-  .col-price{ width:110px; }
-  .col-total{ width:110px; }
-  .col-del  { width:40px; }
-  .total-cell { font-weight:700; color:var(--blue-dark); }
+  /* Continue button */
+  .btn-next {
+    background:var(--blue); color:white; border:none;
+    border-radius:24px; padding:9px 24px; font-weight:600; font-size:.9rem;
+    transition:all .2s;
+  }
+  .btn-next:hover { background:var(--blue-dark); color:white; transform:translateX(3px); }
 
-  /* Service lines table */
-  .svc-table thead th { background:var(--blue); color:white; font-weight:600; border:none; padding:8px 10px; }
-  .svc-table td { padding:8px 10px; vertical-align:middle; }
-  .svc-label { font-weight:600; font-size:.9rem; }
-  .svc-sublabel { font-size:.75rem; color:#888; }
+  /* Generate */
+  .btn-gen {
+    width:100%; padding:14px; font-size:1.05rem; font-weight:700;
+    background:linear-gradient(135deg,var(--blue),var(--blue-dark));
+    color:white; border:none; border-radius:12px;
+    box-shadow:0 4px 14px rgba(79,132,181,.4); transition:all .2s;
+  }
+  .btn-gen:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(79,132,181,.5); }
 
-  /* Totals bar */
-  .totals-bar { background:var(--blue-pale); border:1px solid #cdd8e8; border-radius:8px; padding:12px 16px; margin-top:12px; }
-  .total-final { font-size:1.2rem; font-weight:800; color:var(--blue-dark); }
+  /* Partidas */
+  .tbl-part { font-size:.83rem; }
+  .tbl-part thead th { background:var(--blue); color:white; border:none; padding:7px 6px; white-space:nowrap; }
+  .tbl-part td { padding:5px 5px; vertical-align:middle; }
+  .tbl-part .total-cell { font-weight:700; color:var(--blue-dark); }
 
-  /* Buttons */
-  .btn-primary { background:var(--blue); border-color:var(--blue); }
-  .btn-primary:hover { background:var(--blue-dark); border-color:var(--blue-dark); }
-  .btn-generate { font-size:1.1rem; padding:14px 40px; border-radius:10px; background:linear-gradient(135deg,var(--blue) 0%,var(--blue-dark) 100%); border:none; box-shadow:0 4px 14px rgba(79,132,181,.4); }
-  .btn-generate:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(79,132,181,.5); }
+  /* Service lines */
+  .tbl-svc thead th { background:var(--blue); color:white; border:none; padding:7px 10px; font-size:.85rem; }
+  .tbl-svc td { padding:6px 8px; vertical-align:middle; font-size:.87rem; }
 
-  /* Step indicator */
-  .step-pill { display:inline-flex; align-items:center; gap:8px; background:var(--blue-dark); color:white; border-radius:20px; padding:6px 16px; font-size:.85rem; font-weight:700; margin-bottom:16px; }
+  /* Totals */
+  .total-row { background:var(--blue-light); border:1px solid #cdd8e8; border-radius:8px; padding:9px 14px; }
+  .total-val { font-size:1.05rem; font-weight:800; color:var(--blue-dark); }
 
   /* Overlay */
-  #overlay { display:none; position:fixed; inset:0; background:rgba(15,25,50,.6); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:white; }
+  #overlay { display:none; position:fixed; inset:0; background:rgba(10,20,45,.65); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:white; }
   #overlay.show { display:flex; }
-  #overlay .spinner-border { width:3.5rem; height:3.5rem; border-width:.35rem; }
-  #overlay p { margin-top:16px; font-size:1.1rem; }
+  #overlay .spinner-border { width:3rem; height:3rem; border-width:.3rem; }
 
-  /* Tarifa badge */
-  .tarifa-badge { font-size:.75rem; color:#fff; background:#28a745; border-radius:4px; padding:2px 6px; margin-left:6px; display:none; }
+  /* Fade in */
+  @keyframes fi { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+  .fi { animation:fi .3s ease forwards; }
+
+  /* badge */
+  .tbadge { font-size:.7rem; background:#28a745; color:white; border-radius:4px; padding:1px 5px; margin-left:4px; display:none; }
 
   /* Warning */
-  .no-template { background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:12px 16px; }
-
-  /* Category label */
-  .cat-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#888; margin-bottom:8px; }
+  .warn-box { background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:10px 14px; font-size:.85rem; }
 </style>
 </head>
 <body>
@@ -95,7 +120,7 @@
 <div class="app-header">
   <div class="container">
     <div class="d-flex align-items-center gap-3">
-      <i class="bi bi-file-earmark-text-fill" style="font-size:2rem"></i>
+      <i class="bi bi-file-earmark-text-fill" style="font-size:1.8rem"></i>
       <div>
         <h1>Generador de Presupuestos – Grupo Europa</h1>
         <p>Acometidas Europa S.L. &nbsp;·&nbsp; 91 386 21 12</p>
@@ -103,760 +128,539 @@
     </div>
   </div>
 </div>
+<div class="progress-wrap"><div class="progress-fill" id="prog" style="width:8%"></div></div>
 
 <div id="overlay">
   <div class="spinner-border text-light"></div>
-  <p>Generando documentos, espera un momento…</p>
+  <p class="mt-3 fs-5">Generando documentos…</p>
 </div>
 
-<div class="container py-4" style="max-width:960px">
+<!-- Hidden form submitted at the end -->
+<form id="ff" action="/generar" method="POST" style="display:none"></form>
+
+<div class="chat-wrap">
 
   {% if missing_templates %}
-  <div class="no-template mb-4">
+  <div class="warn-box mb-3">
     <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
-    <strong>Faltan plantillas Word.</strong> Ejecuta primero:
-    <code>python download_templates.py</code>
-    — Plantillas no encontradas: {{ missing_templates | join(', ') }}
+    Faltan plantillas — ejecuta: <code>python download_templates.py</code>
   </div>
   {% endif %}
 
-  <!-- ═══════════════════════════════════════════════════════════════════
-       STEP 1 – Elige el tipo de presupuesto
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="section-card mb-4">
-    <div class="section-header">
-      <i class="bi bi-grid-3x3-gap"></i>
-      <h2>① Tipo de presupuesto</h2>
-    </div>
-    <div class="section-body">
+  <div id="chat"></div>
 
-      <div class="cat-label">Presupuestos de Obra</div>
-      <div class="row g-2 mb-3">
-        <div class="col-6 col-md-3">
-          <div class="type-card" data-tipo="obra_1" onclick="selectTipo('obra_1',this)">
-            <div class="tc-icon">🏗️</div>
-            <div class="tc-name">Obra<br>1 Opción</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="type-card" data-tipo="obra_2" onclick="selectTipo('obra_2',this)">
-            <div class="tc-icon">🔀</div>
-            <div class="tc-name">Obra<br>2 Opciones</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="cat-label">Presupuestos Desatascos y Servicios</div>
-      <div class="row g-2">
-        <div class="col-6 col-md-2">
-          <div class="type-card" data-tipo="desatasco" onclick="selectTipo('desatasco',this)">
-            <div class="tc-icon">🚛</div>
-            <div class="tc-name">Desatasco</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-2">
-          <div class="type-card" data-tipo="cctv_bajante" onclick="selectTipo('cctv_bajante',this)">
-            <div class="tc-icon">📷</div>
-            <div class="tc-name">CCTV<br>Bajante</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-2">
-          <div class="type-card" data-tipo="inspeccion_zum" onclick="selectTipo('inspeccion_zum',this)">
-            <div class="tc-icon">🔍</div>
-            <div class="tc-name">Inspección<br>ZUM</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-2">
-          <div class="type-card" data-tipo="limpieza_aerea" onclick="selectTipo('limpieza_aerea',this)">
-            <div class="tc-icon">💨</div>
-            <div class="tc-name">Limpieza<br>Aérea</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-2">
-          <div class="type-card" data-tipo="fresador" onclick="selectTipo('fresador',this)">
-            <div class="tc-icon">⚙️</div>
-            <div class="tc-name">Fresador</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-2">
-          <div class="type-card" data-tipo="robot_limpieza" onclick="selectTipo('robot_limpieza',this)">
-            <div class="tc-icon">🤖</div>
-            <div class="tc-name">Robot<br>Limpieza</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-2">
-          <div class="type-card" data-tipo="fuga_agua" onclick="selectTipo('fuga_agua',this)">
-            <div class="tc-icon">💧</div>
-            <div class="tc-name">Fuga de<br>Agua</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-2">
-          <div class="type-card" data-tipo="vaciado_fosa" onclick="selectTipo('vaciado_fosa',this)">
-            <div class="tc-icon">🪣</div>
-            <div class="tc-name">Vaciado<br>Fosa</div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════════
-       STEP 2 – Formulario (oculto hasta elegir tipo)
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div id="form-area" style="display:none">
-
-    <form action="/generar" method="POST" id="form-presupuesto">
-      <input type="hidden" name="tipo_modelo" id="tipo_modelo" value="">
-
-      <!-- ② Datos del presupuesto -->
-      <div class="section-card">
-        <div class="section-header"><i class="bi bi-clipboard2-data"></i><h2>② Datos del presupuesto</h2></div>
-        <div class="section-body">
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label">Nº de contrato *</label>
-              <input type="text" name="num_contrato" class="form-control" placeholder="Ej: 4680/26" required>
-            </div>
-            <div class="col-md-8">
-              <label class="form-label">Nombre de la obra / dirección *</label>
-              <input type="text" name="obra" class="form-control" placeholder="Ej: C/ Santa Catalina Labouré 21, Madrid" required>
-            </div>
-            <div class="col-md-5">
-              <label class="form-label">Tipo de servicio</label>
-              <input type="text" name="servicio" class="form-control" placeholder="Ej: Saneamiento y Pocería">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Provincia</label>
-              <input type="text" name="provincia" class="form-control" value="Madrid">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Fecha del presupuesto</label>
-              <input type="date" name="fecha_contrato" class="form-control" value="{{ today }}">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ③ Datos del cliente -->
-      <div class="section-card">
-        <div class="section-header"><i class="bi bi-building"></i><h2>③ Datos del cliente</h2></div>
-        <div class="section-body">
-          <div class="row g-3">
-            <div class="col-md-8">
-              <label class="form-label">Nombre del cliente / comunidad *</label>
-              <input type="text" name="cliente_nombre" class="form-control" placeholder="Ej: Comunidad de Propietarios C/ Mayor 10" required>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Teléfono</label>
-              <input type="text" name="cliente_tel" class="form-control" placeholder="91 234 56 78">
-            </div>
-            <div class="col-md-8">
-              <label class="form-label">Dirección del cliente</label>
-              <input type="text" name="cliente_dir" class="form-control" placeholder="C/ Mayor 10, 28013 Madrid">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Email</label>
-              <input type="email" name="cliente_email" class="form-control" placeholder="admin@comunidad.es">
-            </div>
-            <div class="col-md-8">
-              <label class="form-label">Administrador / promotor</label>
-              <input type="text" name="administracion" class="form-control" placeholder="Ej: Gesfinc Administración">
-            </div>
-            <div class="col-md-4" id="admin-contacts" style="display:none">
-              <label class="form-label">Telf. administrador</label>
-              <input type="text" name="admin_tel" class="form-control" placeholder="91 000 00 00">
-            </div>
-            <div class="col-md-4" id="admin-email-field" style="display:none">
-              <label class="form-label">Email administrador</label>
-              <input type="email" name="admin_email" class="form-control" placeholder="admin@empresa.es">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ④ Textos técnicos (obra_1 / obra_2) -->
-      <div id="sec-obra-texts" class="section-card" style="display:none">
-        <div class="section-header"><i class="bi bi-file-text"></i><h2>④ Textos técnicos</h2></div>
-        <div class="section-body">
-          <div class="row g-3">
-            <div class="col-12">
-              <label class="form-label">Informe técnico <span class="text-muted fw-normal">(descripción del problema)</span></label>
-              <textarea name="informe" class="form-control" rows="2" placeholder="Se han detectado filtraciones en la red de saneamiento…"></textarea>
-            </div>
-            <div class="col-12">
-              <label class="form-label">Solución adoptada</label>
-              <textarea name="solucion" class="form-control" rows="2" placeholder="Sustitución de los tramos afectados…"></textarea>
-            </div>
-            <div class="col-12">
-              <label class="form-label">Memoria técnica <span class="text-muted fw-normal">(descripción de los trabajos)</span></label>
-              <textarea name="memoria" class="form-control" rows="3" placeholder="Los trabajos incluyen la demolición del firme…"></textarea>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Plazo de ejecución (días)</label>
-              <input type="number" name="plazo" class="form-control" value="30" min="1">
-            </div>
-            <div class="col-md-9">
-              <label class="form-label">Forma de pago</label>
-              <input type="text" name="forma_pago" class="form-control" value="50% al inicio de los trabajos, 50% a la finalización">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ⑤ Opciones adicionales obra_2 -->
-      <div id="sec-obra-2-extra" class="section-card" style="display:none">
-        <div class="section-header"><i class="bi bi-sliders"></i><h2>⑤ Opciones y firmante</h2></div>
-        <div class="section-body">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">Tipo de opción (p.ej: Tradicional / Multiliner)</label>
-              <input type="text" name="tipo_opcion" class="form-control" placeholder="Ej: Multiliner">
-            </div>
-            <div class="col-12">
-              <label class="form-label">Memoria técnica – Opción A (Tradicional)</label>
-              <textarea name="memoria_tradicional" class="form-control" rows="2" placeholder="Descripción de la opción tradicional…"></textarea>
-            </div>
-            <div class="col-12">
-              <label class="form-label">Memoria técnica – Opción B (Multiliner)</label>
-              <textarea name="memoria_multiliner" class="form-control" rows="2" placeholder="Descripción de la opción Multiliner…"></textarea>
-            </div>
-            <div class="col-md-5">
-              <label class="form-label">Nombre del firmante</label>
-              <input type="text" name="firmante_nombre" class="form-control">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Cargo</label>
-              <input type="text" name="firmante_cargo" class="form-control" placeholder="Director Técnico">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">DNI</label>
-              <input type="text" name="firmante_dni" class="form-control">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ⑤ / ⑥ Partidas de obra (obra_1) -->
-      <div id="sec-obra-1" class="section-card" style="display:none">
-        <div class="section-header"><i class="bi bi-list-check"></i><h2 id="lbl-partidas">⑤ Partidas de obra</h2></div>
-        <div class="section-body">
-          <p class="text-muted small mb-3">
-            <i class="bi bi-lightbulb text-warning"></i>
-            Escribe un <strong>código de tarifa</strong> (ej: <code>ARQ-4040-50</code>) para autocompletar, o rellena los campos manualmente.
-          </p>
-          <div class="table-responsive">
-            <table class="table table-bordered tabla-partidas" id="tabla-1">
-              <thead>
-                <tr>
-                  <th class="col-code">Código</th>
-                  <th>Descripción *</th>
-                  <th class="col-unit">Ud</th>
-                  <th class="col-qty">Cant.</th>
-                  <th class="col-price">Precio €</th>
-                  <th class="col-total">Total</th>
-                  <th class="col-del"></th>
-                </tr>
-              </thead>
-              <tbody id="tbody-1"></tbody>
-            </table>
-          </div>
-          <button type="button" class="btn btn-outline-primary btn-sm" onclick="addRow('item','tbody-1','total-bar-1')">
-            <i class="bi bi-plus-circle"></i> Añadir partida
-          </button>
-          <div class="totals-bar mt-3" id="total-bar-1">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <span class="text-muted"><span class="n-partidas">0</span> partida(s)</span>
-              <div class="text-end">
-                <div class="text-muted small">Sin IVA: <strong class="t-siniva">0,00 €</strong></div>
-                <div class="text-muted small">IVA 21%: <strong class="t-iva">0,00 €</strong></div>
-                <div class="total-final">TOTAL: <span class="t-total">0,00 €</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ⑥ Partidas Opción A (obra_2) -->
-      <div id="sec-obra-2a" class="section-card" style="display:none">
-        <div class="section-header"><i class="bi bi-list-check"></i><h2>⑥ Partidas – Opción A</h2></div>
-        <div class="section-body">
-          <div class="table-responsive">
-            <table class="table table-bordered tabla-partidas" id="tabla-a">
-              <thead>
-                <tr>
-                  <th class="col-code">Código</th><th>Descripción *</th>
-                  <th class="col-unit">Ud</th><th class="col-qty">Cant.</th>
-                  <th class="col-price">Precio €</th><th class="col-total">Total</th><th class="col-del"></th>
-                </tr>
-              </thead>
-              <tbody id="tbody-a"></tbody>
-            </table>
-          </div>
-          <button type="button" class="btn btn-outline-primary btn-sm" onclick="addRow('item_a','tbody-a','total-bar-a')">
-            <i class="bi bi-plus-circle"></i> Añadir partida
-          </button>
-          <div class="totals-bar mt-3" id="total-bar-a">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <span class="text-muted"><span class="n-partidas">0</span> partida(s)</span>
-              <div class="text-end">
-                <div class="text-muted small">Sin IVA: <strong class="t-siniva">0,00 €</strong></div>
-                <div class="total-final">TOTAL A: <span class="t-total">0,00 €</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ⑦ Partidas Opción B (obra_2) -->
-      <div id="sec-obra-2b" class="section-card" style="display:none">
-        <div class="section-header"><i class="bi bi-list-check"></i><h2>⑦ Partidas – Opción B</h2></div>
-        <div class="section-body">
-          <div class="table-responsive">
-            <table class="table table-bordered tabla-partidas" id="tabla-b">
-              <thead>
-                <tr>
-                  <th class="col-code">Código</th><th>Descripción *</th>
-                  <th class="col-unit">Ud</th><th class="col-qty">Cant.</th>
-                  <th class="col-price">Precio €</th><th class="col-total">Total</th><th class="col-del"></th>
-                </tr>
-              </thead>
-              <tbody id="tbody-b"></tbody>
-            </table>
-          </div>
-          <button type="button" class="btn btn-outline-primary btn-sm" onclick="addRow('item_b','tbody-b','total-bar-b')">
-            <i class="bi bi-plus-circle"></i> Añadir partida
-          </button>
-          <div class="totals-bar mt-3" id="total-bar-b">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <span class="text-muted"><span class="n-partidas">0</span> partida(s)</span>
-              <div class="text-end">
-                <div class="text-muted small">Sin IVA: <strong class="t-siniva">0,00 €</strong></div>
-                <div class="total-final">TOTAL B: <span class="t-total">0,00 €</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ④ Servicios (desatasco / CCTV / limpieza / fresador / robot) -->
-      <div id="sec-svc" class="section-card" style="display:none">
-        <div class="section-header"><i class="bi bi-tools"></i><h2>④ Líneas de servicio</h2></div>
-        <div class="section-body">
-          <p class="text-muted small mb-3">Introduce las unidades y el precio unitario. El importe se calcula automáticamente.</p>
-          <div class="table-responsive">
-            <table class="table table-bordered svc-table">
-              <thead>
-                <tr>
-                  <th style="min-width:200px">Servicio</th>
-                  <th style="width:100px">Unidades</th>
-                  <th style="width:130px">Precio unit. €</th>
-                  <th style="width:130px">Importe €</th>
-                </tr>
-              </thead>
-              <tbody id="svc-tbody">
-
-                <!-- CAMION -->
-                <tr class="svc-row" data-svc="desatasco limpieza_aerea fresador robot_limpieza">
-                  <td><div class="svc-label">Camión cuba / aspiración</div></td>
-                  <td><input type="number" name="camion_uds" class="form-control form-control-sm svc-uds" value="1" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td><input type="number" name="camion_precio" class="form-control form-control-sm svc-precio" value="0" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td class="svc-importe fw-bold">0,00 €</td>
-                </tr>
-                <!-- CAMION_DESP -->
-                <tr class="svc-row" data-svc="desatasco limpieza_aerea fresador robot_limpieza">
-                  <td><div class="svc-label">Desplazamiento camión</div></td>
-                  <td><input type="number" name="camion_desp_uds" class="form-control form-control-sm svc-uds" value="1" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td><input type="number" name="camion_desp_precio" class="form-control form-control-sm svc-precio" value="0" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td class="svc-importe fw-bold">0,00 €</td>
-                </tr>
-                <!-- CCTV -->
-                <tr class="svc-row" data-svc="cctv_bajante inspeccion_zum robot_limpieza">
-                  <td><div class="svc-label">Inspección CCTV</div></td>
-                  <td><input type="number" name="cctv_uds" class="form-control form-control-sm svc-uds" value="1" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td><input type="number" name="cctv_precio" class="form-control form-control-sm svc-precio" value="0" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td class="svc-importe fw-bold">0,00 €</td>
-                </tr>
-                <!-- CCTV_DESP -->
-                <tr class="svc-row" data-svc="cctv_bajante inspeccion_zum robot_limpieza">
-                  <td><div class="svc-label">Desplazamiento CCTV</div></td>
-                  <td><input type="number" name="cctv_desp_uds" class="form-control form-control-sm svc-uds" value="1" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td><input type="number" name="cctv_desp_precio" class="form-control form-control-sm svc-precio" value="0" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td class="svc-importe fw-bold">0,00 €</td>
-                </tr>
-                <!-- FRESADOR -->
-                <tr class="svc-row" data-svc="fresador">
-                  <td><div class="svc-label">Fresador</div></td>
-                  <td><input type="number" name="fresador_uds" class="form-control form-control-sm svc-uds" value="1" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td><input type="number" name="fresador_precio" class="form-control form-control-sm svc-precio" value="0" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td class="svc-importe fw-bold">0,00 €</td>
-                </tr>
-                <!-- FRESADOR_DESP -->
-                <tr class="svc-row" data-svc="fresador">
-                  <td><div class="svc-label">Desplazamiento fresador</div></td>
-                  <td><input type="number" name="fresador_desp_uds" class="form-control form-control-sm svc-uds" value="1" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td><input type="number" name="fresador_desp_precio" class="form-control form-control-sm svc-precio" value="0" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td class="svc-importe fw-bold">0,00 €</td>
-                </tr>
-                <!-- OCUPACION -->
-                <tr class="svc-row" data-svc="limpieza_aerea robot_limpieza">
-                  <td><div class="svc-label">Ocupación vía pública</div></td>
-                  <td><input type="number" name="ocupacion_uds" class="form-control form-control-sm svc-uds" value="1" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td><input type="number" name="ocupacion_precio" class="form-control form-control-sm svc-precio" value="0" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td class="svc-importe fw-bold">0,00 €</td>
-                </tr>
-                <!-- MEDIOS -->
-                <tr class="svc-row" data-svc="limpieza_aerea fresador robot_limpieza">
-                  <td><div class="svc-label">Medios auxiliares</div></td>
-                  <td><input type="number" name="medios_uds" class="form-control form-control-sm svc-uds" value="1" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td><input type="number" name="medios_precio" class="form-control form-control-sm svc-precio" value="0" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td class="svc-importe fw-bold">0,00 €</td>
-                </tr>
-                <!-- LOCALIZACION -->
-                <tr class="svc-row" data-svc="robot_limpieza">
-                  <td><div class="svc-label">Localización / robot</div></td>
-                  <td><input type="number" name="localizacion_uds" class="form-control form-control-sm svc-uds" value="1" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td><input type="number" name="localizacion_precio" class="form-control form-control-sm svc-precio" value="0" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td class="svc-importe fw-bold">0,00 €</td>
-                </tr>
-                <!-- TAPA -->
-                <tr class="svc-row" data-svc="desatasco cctv_bajante limpieza_aerea">
-                  <td><div class="svc-label">Apertura/cierre tapa</div></td>
-                  <td><input type="number" name="tapa_uds" class="form-control form-control-sm svc-uds" value="1" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td><input type="number" name="tapa_precio" class="form-control form-control-sm svc-precio" value="0" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td class="svc-importe fw-bold">0,00 €</td>
-                </tr>
-                <!-- INODORO -->
-                <tr class="svc-row" data-svc="desatasco cctv_bajante">
-                  <td><div class="svc-label">Desatasco inodoro</div></td>
-                  <td><input type="number" name="inodoro_uds" class="form-control form-control-sm svc-uds" value="1" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td><input type="number" name="inodoro_precio" class="form-control form-control-sm svc-precio" value="0" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td class="svc-importe fw-bold">0,00 €</td>
-                </tr>
-                <!-- CATA -->
-                <tr class="svc-row" data-svc="desatasco cctv_bajante">
-                  <td><div class="svc-label">Cata / apertura firme</div></td>
-                  <td><input type="number" name="cata_uds" class="form-control form-control-sm svc-uds" value="1" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td><input type="number" name="cata_precio" class="form-control form-control-sm svc-precio" value="0" min="0" step="any" oninput="calcSvc(this)"></td>
-                  <td class="svc-importe fw-bold">0,00 €</td>
-                </tr>
-
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Horas / tiempo (limpieza, fresador, robot) -->
-          <div id="sec-horas" class="row g-3 mt-1" style="display:none">
-            <div class="col-md-3">
-              <label class="form-label">Horas estimadas</label>
-              <input type="text" name="horas_estimadas" class="form-control" placeholder="Ej: 4">
-            </div>
-            <div id="sec-tiempo" class="col-md-3" style="display:none">
-              <label class="form-label">Tiempo estimado</label>
-              <input type="text" name="tiempo_estimado" class="form-control" placeholder="Ej: Medio día">
-            </div>
-          </div>
-
-          <!-- Total estimado -->
-          <div class="totals-bar mt-3">
-            <div class="d-flex justify-content-end">
-              <div class="total-final">TOTAL ESTIMADO: <span id="total-svc">0,00 €</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ④ Fuga de agua -->
-      <div id="sec-fuga" class="section-card" style="display:none">
-        <div class="section-header"><i class="bi bi-droplet-fill"></i><h2>④ Datos del servicio – Fuga de Agua</h2></div>
-        <div class="section-body">
-          <div class="row g-3">
-            <div class="col-12">
-              <label class="form-label">Localización del servicio</label>
-              <input type="text" name="localizacion_servicio" class="form-control" placeholder="Ej: Red horizontal bajo solera planta baja">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Precio localización de fuga (€)</label>
-              <input type="number" name="precio_localizacion" class="form-control" value="0" min="0" step="any">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Precio hora adicional (€)</label>
-              <input type="number" name="precio_hora_adicional" class="form-control" value="0" min="0" step="any">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Precio bombona gas (€)</label>
-              <input type="number" name="precio_bombona" class="form-control" value="0" min="0" step="any">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ④ Vaciado fosa -->
-      <div id="sec-vaciado" class="section-card" style="display:none">
-        <div class="section-header"><i class="bi bi-bucket-fill"></i><h2>④ Datos del servicio – Vaciado de Fosa</h2></div>
-        <div class="section-body">
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label">Validez de la oferta</label>
-              <input type="text" name="validez_oferta" class="form-control" value="30 días">
-            </div>
-            <hr class="my-2">
-            <div class="col-12"><div class="fw-bold text-muted small mb-1">Unidades de cada operación:</div></div>
-            <div class="col-md-4">
-              <label class="form-label">Ud. desplazamiento</label>
-              <input type="text" name="ud_desplazamiento" class="form-control" placeholder="1">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Ud. succión</label>
-              <input type="text" name="ud_succion" class="form-control" placeholder="1">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Ud. limpieza</label>
-              <input type="text" name="ud_limpieza" class="form-control" placeholder="1">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Ud. descarga</label>
-              <input type="text" name="ud_descarga" class="form-control" placeholder="1">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Ud. residuo</label>
-              <input type="text" name="ud_residuo" class="form-control" placeholder="1">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Submit -->
-      <div class="text-center pb-4">
-        <button type="submit" class="btn btn-primary btn-generate text-white" onclick="return validateAndSubmit()">
-          <i class="bi bi-file-earmark-arrow-down me-2"></i>
-          Generar presupuesto
-        </button>
-        <p class="text-muted small mt-2">Se generará el documento Word y PDF automáticamente</p>
-      </div>
-
-    </form>
-  </div><!-- /form-area -->
-
-</div><!-- /container -->
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// ── Type selector ────────────────────────────────────────────────────────────
-let currentTipo = '';
+// ─── State ───────────────────────────────────────────────────────────────────
+const fd = {};           // collected form data
+let tipo = '';           // selected tipo_modelo
+const rc = {};           // row counters per prefix
 
-const OBRA_TYPES  = ['obra_1', 'obra_2'];
-const SVC_TYPES   = ['desatasco','cctv_bajante','inspeccion_zum','limpieza_aerea','fresador','robot_limpieza'];
-const HORA_TYPES  = ['limpieza_aerea','fresador','robot_limpieza'];
-const TIEMPO_TYPES= ['limpieza_aerea','robot_limpieza'];
+// ─── Type catalogue ───────────────────────────────────────────────────────────
+const TIPOS = [
+  { id:'obra_1',         icon:'🏗️',  name:'Obra\n1 Opción',     cat:'obra' },
+  { id:'obra_2',         icon:'🔀',  name:'Obra\n2 Opciones',   cat:'obra' },
+  { id:'desatasco',      icon:'🚛',  name:'Desatasco',          cat:'svc'  },
+  { id:'cctv_bajante',   icon:'📷',  name:'CCTV\nBajante',      cat:'svc'  },
+  { id:'inspeccion_zum', icon:'🔍',  name:'Inspección\nZUM',    cat:'svc'  },
+  { id:'limpieza_aerea', icon:'💨',  name:'Limpieza\nAérea',    cat:'svc'  },
+  { id:'fresador',       icon:'⚙️',  name:'Fresador',           cat:'svc'  },
+  { id:'robot_limpieza', icon:'🤖',  name:'Robot\nLimpieza',    cat:'svc'  },
+  { id:'fuga_agua',      icon:'💧',  name:'Fuga\nAgua',         cat:'svc'  },
+  { id:'vaciado_fosa',   icon:'🪣',  name:'Vaciado\nFosa',      cat:'svc'  },
+];
+const TLABELS = {};
+TIPOS.forEach(t => TLABELS[t.id] = t.icon + ' ' + t.name.replace('\n',' '));
 
-function selectTipo(tipo, card) {
-  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
-  card.classList.add('selected');
-  currentTipo = tipo;
-  document.getElementById('tipo_modelo').value = tipo;
+const SVC_ROWS = {
+  desatasco:      [['CAMION','Camión cuba alta presión'],['CAMION_DESP','Desplazamiento camión'],['TAPA','Tapón de registro'],['INODORO','Desmontaje de inodoro'],['CATA','Cata en mocheta']],
+  cctv_bajante:   [['CCTV','Inspección CCTV bajante'],['CCTV_DESP','Desplazamiento CCTV'],['TAPA','Tapón de registro'],['INODORO','Desmontaje de inodoro'],['CATA','Cata en mocheta']],
+  inspeccion_zum: [['CCTV','Inspección CCTV / ZUM'],['CCTV_DESP','Desplazamiento CCTV']],
+  limpieza_aerea: [['CAMION','Camión alta presión'],['CAMION_DESP','Desplazamiento camión'],['OCUPACION','Ocupación vía pública'],['MEDIOS','Medios auxiliares'],['TAPA','Tapón de registro']],
+  fresador:       [['FRESADOR','Robot fresador'],['FRESADOR_DESP','Desplazamiento fresador'],['CAMION','Camión alta presión'],['CAMION_DESP','Desplazamiento camión'],['MEDIOS','Medios auxiliares']],
+  robot_limpieza: [['CCTV','Robot CCTV'],['CCTV_DESP','Desplazamiento CCTV'],['CAMION','Camión alta presión'],['CAMION_DESP','Desplazamiento camión'],['OCUPACION','Ocupación vía pública'],['MEDIOS','Medios auxiliares'],['LOCALIZACION','Localización / Robot']],
+};
 
-  const fa = document.getElementById('form-area');
-  fa.style.display = 'block';
+// ─── Chat DOM helpers ─────────────────────────────────────────────────────────
+function botMsg(html) {
+  const d = document.createElement('div');
+  d.className = 'msg-bot fi';
+  d.innerHTML = `<div class="av">GE</div><div class="bub">${html}</div>`;
+  chat().appendChild(d);
+  scrollBot();
+}
+function userMsg(txt) {
+  const d = document.createElement('div');
+  d.className = 'msg-user fi';
+  d.innerHTML = `<div class="bub">${esc(txt)}</div>`;
+  chat().appendChild(d);
+  scrollBot();
+}
+function panel(html) {
+  rmPanel();
+  const d = document.createElement('div');
+  d.className = 'input-panel fi';
+  d.id = 'panel';
+  d.innerHTML = html;
+  chat().appendChild(d);
+  setTimeout(() => d.scrollIntoView({behavior:'smooth',block:'nearest'}), 80);
+}
+function rmPanel() { const el = document.getElementById('panel'); if (el) el.remove(); }
+function chat() { return document.getElementById('chat'); }
+function scrollBot() { setTimeout(()=>window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}),100); }
+function prog(pct) { document.getElementById('prog').style.width = pct + '%'; }
 
-  // Sections to show
-  const show = sec => { const el=document.getElementById(sec); if(el) el.style.display=''; };
-  const hide = sec => { const el=document.getElementById(sec); if(el) el.style.display='none'; };
-
-  // Always show common sections
-  show('form-area');
-
-  // Obra texts
-  ['sec-obra-texts'].forEach(s => OBRA_TYPES.includes(tipo) ? show(s) : hide(s));
-  // Obra 2 extra
-  ['sec-obra-2-extra','sec-obra-2a','sec-obra-2b'].forEach(s => tipo==='obra_2' ? show(s) : hide(s));
-  // Obra 1 items
-  tipo==='obra_1' ? show('sec-obra-1') : hide('sec-obra-1');
-
-  // Service sections
-  SVC_TYPES.includes(tipo) ? show('sec-svc') : hide('sec-svc');
-  hide('sec-fuga');
-  hide('sec-vaciado');
-  if (tipo === 'fuga_agua')    show('sec-fuga');
-  if (tipo === 'vaciado_fosa') show('sec-vaciado');
-
-  // Admin contacts for vaciado
-  if (tipo === 'vaciado_fosa') {
-    show('admin-contacts'); show('admin-email-field');
-  } else {
-    hide('admin-contacts'); hide('admin-email-field');
-  }
-
-  // Horas / tiempo rows inside svc section
-  if (SVC_TYPES.includes(tipo)) {
-    HORA_TYPES.includes(tipo)  ? show('sec-horas')  : hide('sec-horas');
-    TIEMPO_TYPES.includes(tipo) ? show('sec-tiempo') : hide('sec-tiempo');
-    updateSvcRows(tipo);
-  }
-
-  // Initialise rows if first time
-  if (tipo === 'obra_1' && document.getElementById('tbody-1').children.length === 0) {
-    addRow('item','tbody-1','total-bar-1');
-    addRow('item','tbody-1','total-bar-1');
-    addRow('item','tbody-1','total-bar-1');
-  }
-  if (tipo === 'obra_2') {
-    if (document.getElementById('tbody-a').children.length === 0) {
-      addRow('item_a','tbody-a','total-bar-a');
-      addRow('item_a','tbody-a','total-bar-a');
-    }
-    if (document.getElementById('tbody-b').children.length === 0) {
-      addRow('item_b','tbody-b','total-bar-b');
-      addRow('item_b','tbody-b','total-bar-b');
-    }
-  }
-
-  fa.scrollIntoView({behavior:'smooth', block:'start'});
+// ─── STEP 1 — Tipo ────────────────────────────────────────────────────────────
+function step1() {
+  prog(8);
+  botMsg('¡Hola! Soy el Generador de Presupuestos de <strong>Grupo Europa</strong>.<br>¿Qué tipo de presupuesto necesitas hoy?');
+  const obras = TIPOS.filter(t=>t.cat==='obra').map(card).join('');
+  const svcs  = TIPOS.filter(t=>t.cat==='svc').map(card).join('');
+  panel(`
+    <div class="text-muted small fw-bold mb-2">PRESUPUESTOS DE OBRA</div>
+    <div class="type-grid mb-3">${obras}</div>
+    <div class="text-muted small fw-bold mb-2">DESATASCOS Y SERVICIOS</div>
+    <div class="type-grid mb-3">${svcs}</div>
+    <div class="text-end">
+      <button class="btn btn-next" onclick="ok1()">Continuar <i class="bi bi-arrow-right ms-1"></i></button>
+    </div>`);
 }
 
-function updateSvcRows(tipo) {
-  document.querySelectorAll('.svc-row').forEach(tr => {
-    const types = (tr.dataset.svc || '').split(' ');
-    tr.style.display = types.includes(tipo) ? '' : 'none';
+function card(t) {
+  const lines = t.name.split('\n');
+  return `<div class="type-card" onclick="selTipo('${t.id}',this)">
+    <div class="tc-icon">${t.icon}</div>
+    <div class="tc-name">${lines.join('<br>')}</div>
+  </div>`;
+}
+function selTipo(t,el) {
+  document.querySelectorAll('.type-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  tipo = t;
+}
+function ok1() {
+  if (!tipo) { alert('Elige el tipo de presupuesto.'); return; }
+  fd.tipo_modelo = tipo;
+  rmPanel(); userMsg(TLABELS[tipo]); step2();
+}
+
+// ─── STEP 2 — Contrato + obra + fecha ────────────────────────────────────────
+function step2() {
+  prog(22);
+  const isObra = tipo.startsWith('obra');
+  botMsg(`Perfecto. Dame el <strong>número de contrato</strong>, la ${isObra ? 'dirección de la obra' : 'dirección del servicio'} y la <strong>fecha</strong>.`);
+  panel(`
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Nº de contrato *</label>
+        <input id="f_num" type="text" class="form-control" placeholder="Ej: 4680/26">
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">${isObra ? 'Nombre obra / dirección' : 'Dirección del servicio'} *</label>
+        <input id="f_obra" type="text" class="form-control" placeholder="Ej: C/ Mayor 10, Madrid">
+      </div>
+      <div class="col-md-5">
+        <label class="form-label">Tipo de servicio</label>
+        <input id="f_serv" type="text" class="form-control" placeholder="Ej: Saneamiento y Pocería">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Provincia</label>
+        <input id="f_prov" type="text" class="form-control" value="Madrid">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Fecha</label>
+        <input id="f_fecha" type="date" class="form-control" value="{{ today }}">
+      </div>
+    </div>
+    <div class="text-end mt-3">
+      <button class="btn btn-next" onclick="ok2()">Continuar <i class="bi bi-arrow-right ms-1"></i></button>
+    </div>`);
+}
+function ok2() {
+  const num  = v('f_num');
+  const obra = v('f_obra');
+  if (!num||!obra) { alert('El nº de contrato y la dirección son obligatorios.'); return; }
+  fd.num_contrato = num; fd.obra = obra;
+  fd.servicio = v('f_serv'); fd.provincia = v('f_prov')||'Madrid';
+  fd.fecha_contrato = v('f_fecha');
+  rmPanel(); userMsg(`Contrato ${num} · ${obra}`); step3();
+}
+
+// ─── STEP 3 — Cliente ─────────────────────────────────────────────────────────
+function step3() {
+  prog(38);
+  botMsg('¿A nombre de quién va el presupuesto? Dame los datos del <strong>cliente</strong>.');
+  const xtra = tipo==='vaciado_fosa' ? `
+    <div class="col-md-6"><label class="form-label">Teléfono administrador</label><input id="f_atel" type="text" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Email administrador</label><input id="f_amail" type="email" class="form-control"></div>` : '';
+  panel(`
+    <div class="row g-3">
+      <div class="col-md-8"><label class="form-label">Nombre del cliente / comunidad *</label>
+        <input id="f_cnombre" type="text" class="form-control" placeholder="C.P. C/ Mayor 10"></div>
+      <div class="col-md-4"><label class="form-label">Teléfono</label>
+        <input id="f_ctel" type="text" class="form-control"></div>
+      <div class="col-md-8"><label class="form-label">Dirección del cliente</label>
+        <input id="f_cdir" type="text" class="form-control"></div>
+      <div class="col-md-4"><label class="form-label">Email</label>
+        <input id="f_cmail" type="email" class="form-control"></div>
+      <div class="col-12"><label class="form-label">Administrador / promotor</label>
+        <input id="f_admin" type="text" class="form-control" placeholder="Ej: Gesfinc Administración"></div>
+      ${xtra}
+    </div>
+    <div class="text-end mt-3">
+      <button class="btn btn-next" onclick="ok3()">Continuar <i class="bi bi-arrow-right ms-1"></i></button>
+    </div>`);
+}
+function ok3() {
+  const n = v('f_cnombre');
+  if (!n) { alert('El nombre del cliente es obligatorio.'); return; }
+  fd.cliente_nombre = n; fd.cliente_tel = v('f_ctel');
+  fd.cliente_dir = v('f_cdir'); fd.cliente_email = v('f_cmail');
+  fd.administracion = v('f_admin')||'—';
+  if (tipo==='vaciado_fosa') {
+    fd.admin_tel  = v('f_atel')||'';
+    fd.admin_email= v('f_amail')||'';
+  }
+  rmPanel();
+  userMsg(n + (fd.administracion && fd.administracion!=='—' ? ` · ${fd.administracion}` : ''));
+  // Route based on type
+  if (tipo==='obra_1'||tipo==='obra_2') return stepObraTextos();
+  if (tipo==='fuga_agua')    return stepFuga();
+  if (tipo==='vaciado_fosa') return stepVaciado();
+  return stepSvc();
+}
+
+// ─── STEP 4a — Obra: textos técnicos ────────────────────────────────────────
+function stepObraTextos() {
+  prog(52);
+  botMsg('Cuéntame el <strong>problema técnico</strong> y la <strong>solución propuesta</strong>.');
+  const extra2 = tipo==='obra_2' ? `
+    <div class="col-12"><label class="form-label">Memoria Opción A (Tradicional)</label>
+      <textarea id="f_mtrad" class="form-control" rows="2"></textarea></div>
+    <div class="col-12"><label class="form-label">Memoria Opción B (Multiliner)</label>
+      <textarea id="f_mmulti" class="form-control" rows="2"></textarea></div>
+    <div class="col-md-5"><label class="form-label">Tipo de opción</label>
+      <input id="f_topcion" type="text" class="form-control" placeholder="Multiliner"></div>` : '';
+  panel(`
+    <div class="row g-3">
+      <div class="col-12"><label class="form-label">Informe técnico <span class="text-muted fw-normal">(descripción del problema)</span></label>
+        <textarea id="f_inf" class="form-control" rows="2" placeholder="Se han detectado filtraciones…"></textarea></div>
+      <div class="col-12"><label class="form-label">Solución adoptada</label>
+        <textarea id="f_sol" class="form-control" rows="2" placeholder="Sustitución de los tramos afectados…"></textarea></div>
+      <div class="col-12"><label class="form-label">Memoria técnica</label>
+        <textarea id="f_mem" class="form-control" rows="3" placeholder="Los trabajos incluyen…"></textarea></div>
+      ${extra2}
+    </div>
+    <div class="text-end mt-3">
+      <button class="btn btn-next" onclick="okObraTextos()">Continuar <i class="bi bi-arrow-right ms-1"></i></button>
+    </div>`);
+}
+function okObraTextos() {
+  fd.informe=v('f_inf'); fd.solucion=v('f_sol'); fd.memoria=v('f_mem');
+  if (tipo==='obra_2') {
+    fd.memoria_tradicional=v('f_mtrad'); fd.memoria_multiliner=v('f_mmulti');
+    fd.tipo_opcion=v('f_topcion');
+  }
+  rmPanel(); userMsg('Textos técnicos ✓');
+  if (tipo==='obra_2') stepPartidas('a');
+  else stepPartidas('1');
+}
+
+// ─── STEP 5 — Partidas ───────────────────────────────────────────────────────
+function stepPartidas(which) {
+  prog(which==='b' ? 78 : 65);
+  const label = which==='b' ? 'las partidas de la <strong>Opción B</strong>' :
+                which==='a' ? 'las partidas de la <strong>Opción A</strong>' :
+                'las <strong>partidas de obra</strong>';
+  botMsg(`Añade ${label}. Escribe un código de tarifa para autocompletar, o rellena manualmente.`);
+  const prefix = which==='1'?'item':which==='a'?'item_a':'item_b';
+  const bid    = 'bar'+which;
+  const blabel = which==='b'?'TOTAL B':which==='a'?'TOTAL A':'TOTAL';
+  rc[prefix] = 0;
+  panel(`
+    <div class="table-responsive">
+      <table class="table table-bordered tbl-part" id="tbl${which}">
+        <thead><tr>
+          <th style="width:115px">Código</th><th>Descripción *</th>
+          <th style="width:68px">Ud</th><th style="width:72px">Cant.</th>
+          <th style="width:95px">Precio €</th><th style="width:95px">Total</th>
+          <th style="width:34px"></th>
+        </tr></thead>
+        <tbody id="tb${which}"></tbody>
+      </table>
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-primary mb-3"
+            onclick="addRow('${prefix}','tb${which}','${bid}')">
+      <i class="bi bi-plus-circle"></i> Añadir partida
+    </button>
+    <div class="total-row d-flex justify-content-between align-items-center mb-3" id="${bid}">
+      <span class="text-muted small"><span class="nr">0</span> partida(s)</span>
+      <span class="total-val">${blabel}: <span class="tv">0,00 €</span></span>
+    </div>
+    <div class="text-end">
+      <button class="btn btn-next" onclick="okPartidas('${which}','${prefix}')">
+        Continuar <i class="bi bi-arrow-right ms-1"></i>
+      </button>
+    </div>`);
+  // Start with 2 empty rows
+  addRow(prefix,'tb'+which,bid);
+  addRow(prefix,'tb'+which,bid);
+}
+function okPartidas(which, prefix) {
+  const n = document.querySelectorAll(`#tb${which} tr`).length;
+  if (!n) { alert('Añade al menos una partida.'); return; }
+  // collect rows into fd
+  document.querySelectorAll(`#tb${which} tr`).forEach(tr => {
+    const i = tr.id.replace(prefix+'-row-','');
+    ['desc','unit','qty','price'].forEach(f => {
+      const el = tr.querySelector(`[name="${prefix}_${f}_${i}"]`);
+      if (el) fd[`${prefix}_${f}_${i}`] = el.value;
+    });
   });
-  recalcSvcTotal();
+  rmPanel(); userMsg(`${n} partida(s) ✓`);
+  if (which==='a') stepPartidas('b');
+  else stepCondiciones();
 }
 
-// ── Service line auto-calc ────────────────────────────────────────────────────
-function calcSvc(input) {
-  const tr = input.closest('tr');
-  const uds   = parseFloat(tr.querySelector('.svc-uds').value)   || 0;
-  const precio= parseFloat(tr.querySelector('.svc-precio').value) || 0;
-  tr.querySelector('.svc-importe').textContent = fmtEur((uds * precio).toFixed(2));
-  recalcSvcTotal();
+// ─── STEP 6 — Condiciones ────────────────────────────────────────────────────
+function stepCondiciones() {
+  prog(88);
+  botMsg('Casi listo. Dame las <strong>condiciones económicas</strong>.');
+  const firm = tipo==='obra_2' ? `
+    <div class="col-md-5"><label class="form-label">Nombre del firmante</label><input id="f_fnombre" type="text" class="form-control"></div>
+    <div class="col-md-4"><label class="form-label">Cargo</label><input id="f_fcargo" type="text" class="form-control" placeholder="Director Técnico"></div>
+    <div class="col-md-3"><label class="form-label">DNI</label><input id="f_fdni" type="text" class="form-control"></div>` : '';
+  panel(`
+    <div class="row g-3">
+      <div class="col-md-3"><label class="form-label">Plazo (días)</label>
+        <input id="f_plazo" type="number" class="form-control" value="30" min="1"></div>
+      <div class="col-md-9"><label class="form-label">Forma de pago</label>
+        <input id="f_pago" type="text" class="form-control" value="50% al inicio de los trabajos, 50% a la finalización"></div>
+      ${firm}
+    </div>
+    <div class="text-end mt-3">
+      <button class="btn btn-next" onclick="okCondiciones()">Continuar <i class="bi bi-arrow-right ms-1"></i></button>
+    </div>`);
+}
+function okCondiciones() {
+  fd.plazo=v('f_plazo')||'30'; fd.forma_pago=v('f_pago');
+  if (tipo==='obra_2') {
+    fd.firmante_nombre=v('f_fnombre')||''; fd.firmante_cargo=v('f_fcargo')||''; fd.firmante_dni=v('f_fdni')||'';
+  }
+  rmPanel(); userMsg(`Plazo: ${fd.plazo} días`); stepGenerar();
 }
 
-function recalcSvcTotal() {
-  let total = 0;
-  document.querySelectorAll('#svc-tbody .svc-row').forEach(tr => {
-    if (tr.style.display === 'none') return;
-    const uds   = parseFloat(tr.querySelector('.svc-uds').value)   || 0;
-    const precio= parseFloat(tr.querySelector('.svc-precio').value) || 0;
-    total += uds * precio;
+// ─── STEP 4b — Servicios (tarifas) ───────────────────────────────────────────
+function stepSvc() {
+  prog(62);
+  botMsg('Introduce las <strong>unidades y precios</strong> del servicio. El importe se calcula automáticamente.');
+  const rows = (SVC_ROWS[tipo]||[]).map(([key,label]) => `
+    <tr>
+      <td class="fw-semibold" style="font-size:.87rem">${label}</td>
+      <td><input type="number" id="s_${key.toLowerCase()}_u" class="form-control form-control-sm svc-u" value="1" min="0" step="any" oninput="cSvc()"></td>
+      <td><input type="number" id="s_${key.toLowerCase()}_p" class="form-control form-control-sm svc-p" value="0" min="0" step="any" oninput="cSvc()"></td>
+      <td class="fw-bold svc-i" id="s_${key.toLowerCase()}_i">0,00 €</td>
+    </tr>`).join('');
+  const hasHoras  = ['limpieza_aerea','fresador','robot_limpieza'].includes(tipo);
+  const hasTiempo = ['limpieza_aerea','robot_limpieza'].includes(tipo);
+  panel(`
+    <table class="table table-bordered tbl-svc mb-3">
+      <thead><tr>
+        <th style="min-width:170px">Servicio</th>
+        <th style="width:95px">Uds.</th>
+        <th style="width:110px">Precio/ud €</th>
+        <th style="width:100px">Importe €</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${hasHoras?`<div class="row g-2 mb-3">
+      <div class="col-4"><label class="form-label">Horas estimadas</label><input id="f_horas" type="text" class="form-control" placeholder="4"></div>
+      ${hasTiempo?`<div class="col-5"><label class="form-label">Tiempo estimado</label><input id="f_tiempo" type="text" class="form-control" placeholder="Medio día"></div>`:''}
+    </div>`:''}
+    <div class="total-row d-flex justify-content-end mb-3">
+      <span class="total-val">TOTAL ESTIMADO: <span id="tsvc">0,00 €</span></span>
+    </div>
+    <div class="text-end">
+      <button class="btn btn-next" onclick="okSvc()">Continuar <i class="bi bi-arrow-right ms-1"></i></button>
+    </div>`);
+}
+function cSvc() {
+  // update per-row importe
+  (SVC_ROWS[tipo]||[]).forEach(([key]) => {
+    const k=key.toLowerCase();
+    const u=parseFloat(document.getElementById(`s_${k}_u`)?.value)||0;
+    const p=parseFloat(document.getElementById(`s_${k}_p`)?.value)||0;
+    const iEl=document.getElementById(`s_${k}_i`);
+    if(iEl) iEl.textContent=fmtE(u*p);
   });
-  document.getElementById('total-svc').textContent = fmtEur(total.toFixed(2));
+  let tot=0;
+  document.querySelectorAll('.svc-u').forEach(u=>{
+    const p=u.closest('tr').querySelector('.svc-p');
+    tot+=(parseFloat(u.value)||0)*(parseFloat(p?.value)||0);
+  });
+  const el=document.getElementById('tsvc'); if(el) el.textContent=fmtE(tot);
+}
+function okSvc() {
+  (SVC_ROWS[tipo]||[]).forEach(([key]) => {
+    const k=key.toLowerCase();
+    fd[k+'_uds']   = document.getElementById(`s_${k}_u`)?.value||'0';
+    fd[k+'_precio'] = document.getElementById(`s_${k}_p`)?.value||'0';
+  });
+  if (document.getElementById('f_horas'))  fd.horas_estimadas  = v('f_horas');
+  if (document.getElementById('f_tiempo')) fd.tiempo_estimado  = v('f_tiempo');
+  rmPanel(); userMsg('Tarifas del servicio ✓'); stepGenerar();
 }
 
-// ── Partidas rows ─────────────────────────────────────────────────────────────
-const rowCounters = {};
+// ─── STEP 4c — Fuga agua ─────────────────────────────────────────────────────
+function stepFuga() {
+  prog(62);
+  botMsg('Datos del servicio de <strong>localización de fuga de agua</strong>.');
+  panel(`
+    <div class="row g-3">
+      <div class="col-12"><label class="form-label">Localización del servicio</label>
+        <input id="f_loc" type="text" class="form-control" placeholder="Red horizontal bajo solera planta baja"></div>
+      <div class="col-md-4"><label class="form-label">Precio localización fuga (€)</label>
+        <input id="f_ploc" type="number" class="form-control" value="950" step="any"></div>
+      <div class="col-md-4"><label class="form-label">Precio hora adicional (€)</label>
+        <input id="f_phora" type="number" class="form-control" value="110" step="any"></div>
+      <div class="col-md-4"><label class="form-label">Precio bombona gas (€)</label>
+        <input id="f_pbomb" type="number" class="form-control" value="160" step="any"></div>
+    </div>
+    <div class="text-end mt-3">
+      <button class="btn btn-next" onclick="okFuga()">Continuar <i class="bi bi-arrow-right ms-1"></i></button>
+    </div>`);
+}
+function okFuga() {
+  fd.localizacion_servicio=v('f_loc'); fd.precio_localizacion=v('f_ploc');
+  fd.precio_hora_adicional=v('f_phora'); fd.precio_bombona=v('f_pbomb');
+  rmPanel(); userMsg('Datos de fuga ✓'); stepGenerar();
+}
 
-function addRow(prefix, tbodyId, barId, desc='', unit='PA', qty=1, price=0) {
-  if (!rowCounters[prefix]) rowCounters[prefix] = 0;
-  const i = rowCounters[prefix]++;
-  const total = (qty * price).toFixed(2);
+// ─── STEP 4d — Vaciado fosa ──────────────────────────────────────────────────
+function stepVaciado() {
+  prog(62);
+  botMsg('Datos del servicio de <strong>vaciado de fosa</strong>.');
+  panel(`
+    <div class="row g-3">
+      <div class="col-md-4"><label class="form-label">Validez de la oferta</label>
+        <input id="f_val" type="text" class="form-control" value="30 días"></div>
+      <div class="col-12"><div class="small fw-bold text-muted">Unidades de cada operación:</div></div>
+      <div class="col-md-4"><label class="form-label">Ud. desplazamiento</label><input id="f_udesp" type="text" class="form-control" placeholder="1"></div>
+      <div class="col-md-4"><label class="form-label">Ud. succión</label><input id="f_usuc" type="text" class="form-control" placeholder="1"></div>
+      <div class="col-md-4"><label class="form-label">Ud. limpieza</label><input id="f_ulimp" type="text" class="form-control" placeholder="1"></div>
+      <div class="col-md-4"><label class="form-label">Ud. descarga</label><input id="f_udesc" type="text" class="form-control" placeholder="1"></div>
+      <div class="col-md-4"><label class="form-label">Ud. residuo</label><input id="f_ures" type="text" class="form-control" placeholder="1"></div>
+    </div>
+    <div class="text-end mt-3">
+      <button class="btn btn-next" onclick="okVaciado()">Continuar <i class="bi bi-arrow-right ms-1"></i></button>
+    </div>`);
+}
+function okVaciado() {
+  fd.validez_oferta=v('f_val'); fd.ud_desplazamiento=v('f_udesp');
+  fd.ud_succion=v('f_usuc'); fd.ud_limpieza=v('f_ulimp');
+  fd.ud_descarga=v('f_udesc'); fd.ud_residuo=v('f_ures');
+  rmPanel(); userMsg('Datos vaciado ✓'); stepGenerar();
+}
+
+// ─── FINAL STEP — Generar ────────────────────────────────────────────────────
+function stepGenerar() {
+  prog(100);
+  botMsg('¡Todo listo! Pulsa <strong>Generar presupuesto</strong> para crear los documentos.');
+  panel(`
+    <button class="btn btn-gen" onclick="submit()">
+      <i class="bi bi-file-earmark-arrow-down me-2"></i>Generar presupuesto
+    </button>
+    <p class="text-muted small text-center mt-2">Se generarán Word y PDF automáticamente</p>`);
+}
+function submit() {
+  const form = document.getElementById('ff');
+  form.innerHTML = '';
+  Object.entries(fd).forEach(([k,val]) => {
+    const inp = document.createElement('input');
+    inp.type='hidden'; inp.name=k; inp.value=val||'';
+    form.appendChild(inp);
+  });
+  document.getElementById('overlay').classList.add('show');
+  form.submit();
+}
+
+// ─── Partidas rows ────────────────────────────────────────────────────────────
+function addRow(prefix, tbId, barId, desc='', unit='PA', qty=1, price=0) {
+  if (!rc[prefix]) rc[prefix]=0;
+  const i = rc[prefix]++;
   const tr = document.createElement('tr');
   tr.id = `${prefix}-row-${i}`;
+  const tot = qty*price;
   tr.innerHTML = `
+    <td><input type="text" class="form-control form-control-sm tc" placeholder="ARQ-…"
+               onblur="ltarifa(this,'${prefix}',${i},'${barId}')"></td>
     <td>
-      <input type="text" class="form-control form-control-sm tarifa-code" placeholder="ARQ-…"
-             onblur="lookupTarifa(this,'${prefix}',${i})">
+      <input type="text" name="${prefix}_desc_${i}" class="form-control form-control-sm" placeholder="Descripción" value="${esc(desc)}">
+      <span class="tbadge" id="${prefix}bg${i}">✓ Tarifa</span>
     </td>
-    <td>
-      <input type="text" name="${prefix}_desc_${i}" class="form-control form-control-sm"
-             placeholder="Descripción" required value="${esc(desc)}">
-      <span class="tarifa-badge" id="${prefix}-badge-${i}"><i class="bi bi-check2"></i> Tarifa</span>
-    </td>
-    <td>
-      <select name="${prefix}_unit_${i}" class="form-select form-select-sm">
-        ${['PA','ud','ml','m²','m³','kg','h'].map(u => `<option${u===unit?' selected':''}>${u}</option>`).join('')}
-      </select>
-    </td>
-    <td><input type="number" name="${prefix}_qty_${i}" class="form-control form-control-sm" value="${qty}" min="0" step="any" oninput="calcRow('${prefix}',${i},'${barId}')"></td>
-    <td><input type="number" name="${prefix}_price_${i}" class="form-control form-control-sm" value="${price}" min="0" step="any" oninput="calcRow('${prefix}',${i},'${barId}')"></td>
-    <td class="total-cell text-end" id="${prefix}-total-${i}">${fmtEur(total)}</td>
+    <td><select name="${prefix}_unit_${i}" class="form-select form-select-sm">
+      ${['PA','ud','ml','m²','m³','kg','h'].map(u=>`<option${u===unit?' selected':''}>${u}</option>`).join('')}
+    </select></td>
+    <td><input type="number" name="${prefix}_qty_${i}" class="form-control form-control-sm" value="${qty}" min="0" step="any" oninput="calcR('${prefix}',${i},'${barId}')"></td>
+    <td><input type="number" name="${prefix}_price_${i}" class="form-control form-control-sm" value="${price}" min="0" step="any" oninput="calcR('${prefix}',${i},'${barId}')"></td>
+    <td class="total-cell text-end" id="${prefix}t${i}">${fmtE(tot)}</td>
     <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="delRow('${prefix}',${i},'${barId}')"><i class="bi bi-trash3"></i></button></td>`;
-  document.getElementById(tbodyId).appendChild(tr);
-  updateBarTotals(barId, prefix);
+  document.getElementById(tbId).appendChild(tr);
+  updBar(barId,prefix,tbId);
 }
-
-function delRow(prefix, i, barId) {
-  const row = document.getElementById(`${prefix}-row-${i}`);
-  if (row) row.remove();
-  updateBarTotals(barId, prefix);
+function delRow(prefix,i,barId) {
+  const which = barId.replace('bar','');
+  const tbId = 'tb'+which;
+  const r=document.getElementById(`${prefix}-row-${i}`); if(r) r.remove();
+  updBar(barId,prefix,tbId);
 }
-
-function calcRow(prefix, i, barId) {
-  const qty   = parseFloat(document.querySelector(`[name="${prefix}_qty_${i}"]`).value) || 0;
-  const price = parseFloat(document.querySelector(`[name="${prefix}_price_${i}"]`).value) || 0;
-  document.getElementById(`${prefix}-total-${i}`).textContent = fmtEur((qty * price).toFixed(2));
-  updateBarTotals(barId, prefix);
+function calcR(prefix,i,barId) {
+  const q=parseFloat(document.querySelector(`[name="${prefix}_qty_${i}"]`).value)||0;
+  const p=parseFloat(document.querySelector(`[name="${prefix}_price_${i}"]`).value)||0;
+  document.getElementById(`${prefix}t${i}`).textContent=fmtE(q*p);
+  const which=barId.replace('bar','');
+  updBar(barId,prefix,'tb'+which);
 }
-
-function updateBarTotals(barId, prefix) {
-  const bar = document.getElementById(barId);
-  if (!bar) return;
-  const tbody = bar.previousElementSibling?.querySelector('tbody') || bar.closest('.section-body').querySelector('tbody');
-  let subtotal = 0;
-  if (tbody) {
-    tbody.querySelectorAll('tr').forEach(tr => {
-      const id = tr.id?.replace(`${prefix}-row-`, '');
-      if (!id) return;
-      const qty   = parseFloat(tr.querySelector(`[name="${prefix}_qty_${id}"]`)?.value) || 0;
-      const price = parseFloat(tr.querySelector(`[name="${prefix}_price_${id}"]`)?.value) || 0;
-      subtotal += qty * price;
-    });
-  }
-  const iva   = subtotal * 0.21;
-  const total = subtotal + iva;
-  bar.querySelector('.n-partidas').textContent = tbody ? tbody.querySelectorAll('tr').length : 0;
-  bar.querySelector('.t-siniva').textContent   = fmtEur(subtotal.toFixed(2));
-  const ivaEl = bar.querySelector('.t-iva');
-  if (ivaEl) ivaEl.textContent = fmtEur(iva.toFixed(2));
-  bar.querySelector('.t-total').textContent    = fmtEur(total.toFixed(2));
+function updBar(barId,prefix,tbId) {
+  const bar=document.getElementById(barId); if(!bar) return;
+  const tbody=document.getElementById(tbId); if(!tbody) return;
+  let sub=0,n=0;
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const i=tr.id.replace(prefix+'-row-','');
+    const q=parseFloat(tr.querySelector(`[name="${prefix}_qty_${i}"]`)?.value)||0;
+    const p=parseFloat(tr.querySelector(`[name="${prefix}_price_${i}"]`)?.value)||0;
+    sub+=q*p; n++;
+  });
+  const nr=bar.querySelector('.nr'); if(nr) nr.textContent=n;
+  const tv=bar.querySelector('.tv'); if(tv) tv.textContent=fmtE(sub*1.21);
 }
-
-// ── Tarifa lookup ─────────────────────────────────────────────────────────────
-async function lookupTarifa(input, prefix, i) {
-  const code = input.value.trim().toUpperCase();
-  if (!code) return;
+async function ltarifa(inp,prefix,i,barId) {
+  const code=inp.value.trim().toUpperCase(); if(!code) return;
   try {
-    const res = await fetch(`/api/tarifa/${encodeURIComponent(code)}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (data.descripcion) {
-      document.querySelector(`[name="${prefix}_desc_${i}"]`).value  = data.descripcion;
-      document.querySelector(`[name="${prefix}_price_${i}"]`).value = data.precio || 0;
-      const uSel = document.querySelector(`[name="${prefix}_unit_${i}"]`);
-      if (data.unidad) [...uSel.options].forEach(o => o.selected = (o.value === data.unidad));
-      const badge = document.getElementById(`${prefix}-badge-${i}`);
-      if (badge) badge.style.display = 'inline';
-      const barId = prefix === 'item' ? 'total-bar-1' : prefix === 'item_a' ? 'total-bar-a' : 'total-bar-b';
-      calcRow(prefix, i, barId);
+    const r=await fetch(`/api/tarifa/${encodeURIComponent(code)}`);
+    if(!r.ok) return;
+    const d=await r.json();
+    if(d.descripcion){
+      document.querySelector(`[name="${prefix}_desc_${i}"]`).value=d.descripcion;
+      document.querySelector(`[name="${prefix}_price_${i}"]`).value=d.precio||0;
+      const uS=document.querySelector(`[name="${prefix}_unit_${i}"]`);
+      if(d.unidad)[...uS.options].forEach(o=>o.selected=(o.value===d.unidad));
+      const bg=document.getElementById(`${prefix}bg${i}`); if(bg) bg.style.display='inline';
+      const which=barId.replace('bar','');
+      calcR(prefix,i,barId);
     }
-  } catch(e) {}
+  } catch(e){}
 }
 
-// ── Submit validation ─────────────────────────────────────────────────────────
-function validateAndSubmit() {
-  if (!currentTipo) {
-    alert('Elige primero el tipo de presupuesto (Paso 1).');
-    return false;
-  }
-  if (currentTipo === 'obra_1') {
-    const rows = document.getElementById('tbody-1').querySelectorAll('tr');
-    if (!rows.length) { alert('Añade al menos una partida de obra.'); return false; }
-  }
-  if (currentTipo === 'obra_2') {
-    const ra = document.getElementById('tbody-a').querySelectorAll('tr').length;
-    const rb = document.getElementById('tbody-b').querySelectorAll('tr').length;
-    if (!ra && !rb) { alert('Añade partidas en al menos una de las opciones.'); return false; }
-  }
-  document.getElementById('overlay').classList.add('show');
-  return true;
-}
+// ─── Tiny helpers ─────────────────────────────────────────────────────────────
+function v(id) { return (document.getElementById(id)?.value||'').trim(); }
+function fmtE(n) { return parseFloat(n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function fmtEur(n) {
-  return parseFloat(n).toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
-}
-function esc(s) {
-  return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;');
-}
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+step1();
 </script>
 </body>
 </html>
