@@ -1,4 +1,4 @@
-const Database = require('better-sqlite3');
+const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 
 const dbPath = path.join(__dirname, 'restaurant.db');
@@ -6,11 +6,23 @@ let db;
 
 function getDb() {
   if (!db) {
-    db = new Database(dbPath);
-    db.pragma('journal_mode = WAL');
-    db.pragma('foreign_keys = ON');
+    db = new DatabaseSync(dbPath);
+    db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
   }
   return db;
+}
+
+function transaction(fn) {
+  const database = getDb();
+  database.exec('BEGIN');
+  try {
+    const result = fn();
+    database.exec('COMMIT');
+    return result;
+  } catch (err) {
+    database.exec('ROLLBACK');
+    throw err;
+  }
 }
 
 function initDb() {
@@ -121,4 +133,4 @@ function initDb() {
   console.log('Base de datos inicializada');
 }
 
-module.exports = { getDb, initDb };
+module.exports = { getDb, initDb, transaction };

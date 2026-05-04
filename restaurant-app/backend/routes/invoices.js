@@ -4,7 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Anthropic = require('@anthropic-ai/sdk');
-const { getDb } = require('../db');
+const { getDb, transaction } = require('../db');
 
 const storage = multer.diskStorage({
   destination: path.join(__dirname, '../uploads'),
@@ -48,7 +48,7 @@ router.get('/:id', (req, res) => {
   res.json({ ...invoice, items });
 });
 
-// POST /api/invoices/ocr - Analyze image with Claude
+// POST /api/invoices/ocr
 router.post('/ocr', upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No se recibió imagen' });
 
@@ -82,12 +82,12 @@ Extrae los datos de la factura y devuelve ÚNICAMENTE un JSON válido con esta e
     }
   ],
   "subtotal": número,
-  "tax_rate": número (porcentaje ej: 10),
+  "tax_rate": número,
   "tax_amount": número,
   "total": número,
-  "notes": "observaciones adicionales o null"
+  "notes": "observaciones o null"
 }
-Devuelve SOLO el JSON sin ningún texto adicional, sin markdown, sin explicaciones.`,
+Devuelve SOLO el JSON sin ningún texto adicional.`,
           cache_control: { type: 'ephemeral' }
         }
       ],
@@ -95,31 +95,23 @@ Devuelve SOLO el JSON sin ningún texto adicional, sin markdown, sin explicacion
         {
           role: 'user',
           content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: mimeType, data: base64Image }
-            },
+            { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64Image } },
             { type: 'text', text: 'Analiza esta factura y extrae todos sus datos.' }
           ]
         }
       ]
     });
 
-    const text = message.content[0].text.trim();
-    const jsonStr = text.replace(/^```json?\n?/, '').replace(/\n?```$/, '');
-    const data = JSON.parse(jsonStr);
-
-    res.json({
-      ...data,
-      image_path: `/uploads/${req.file.filename}`
-    });
+    const text = message.content[0].text.trim().replace(/^```json?\n?/, '').replace(/\n?```$/, '');
+    const data = JSON.parse(text);
+    res.json({ ...data, image_path: `/uploads/${req.file.filename}` });
   } catch (err) {
     console.error('OCR error:', err);
     res.status(500).json({ error: 'Error al analizar la imagen: ' + err.message });
   }
 });
 
-// POST /api/invoices - Create invoice and update stock
+// POST /api/invoices
 router.post('/', (req, res) => {
   const db = getDb();
   const { invoice_number, supplier_id, supplier_name, invoice_date, subtotal, tax_amount, total_amount, image_path, notes, status, items } = req.body;
@@ -128,55 +120,46 @@ router.post('/', (req, res) => {
     INSERT INTO invoices (invoice_number, supplier_id, supplier_name, invoice_date, subtotal, tax_amount, total_amount, image_path, notes, status)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-
   const insertItem = db.prepare(`
     INSERT INTO invoice_items (invoice_id, product_id, description, quantity, unit, unit_price, total_price)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
-
-  const updateStock = db.prepare(`
-    UPDATE products SET current_stock = current_stock + ?, cost_per_unit = ? WHERE id = ?
-  `);
-
+  const getProduct = db.prepare('SELECT * FROM products WHERE id = ?');
+  const updateStock = db.prepare('UPDATE products SET current_stock = current_stock + ?, cost_per_unit = ? WHERE id = ?');
   const insertMovement = db.prepare(`
     INSERT INTO stock_movements (product_id, product_name, movement_type, quantity, reference_type, reference_id, notes)
     VALUES (?, ?, 'entrada', ?, 'invoice', ?, ?)
   `);
 
-  const getProduct = db.prepare('SELECT * FROM products WHERE id = ?');
+  try {
+    const id = transaction(() => {
+      const invoiceResult = insertInvoice.run(
+        invoice_number, supplier_id || null, supplier_name || '', invoice_date,
+        subtotal || 0, tax_amount || 0, total_amount || 0, image_path || null, notes || null,
+        status || 'registrada'
+      );
+      const invoiceId = invoiceResult.lastInsertRowid;
 
-  const transaction = db.transaction(() => {
-    const invoiceResult = insertInvoice.run(
-      invoice_number, supplier_id || null, supplier_name || '', invoice_date,
-      subtotal || 0, tax_amount || 0, total_amount || 0, image_path || null, notes || null,
-      status || 'registrada'
-    );
-    const invoiceId = invoiceResult.lastInsertRowid;
+      if (items && items.length > 0) {
+        for (const item of items) {
+          insertItem.run(invoiceId, item.product_id || null, item.description, item.quantity, item.unit, item.unit_price, item.total_price);
 
-    if (items && items.length > 0) {
-      for (const item of items) {
-        insertItem.run(invoiceId, item.product_id || null, item.description, item.quantity, item.unit, item.unit_price, item.total_price);
-
-        if (item.product_id && item.quantity > 0) {
-          const product = getProduct.get(item.product_id);
-          if (product) {
-            // Weighted average cost
-            const totalStock = product.current_stock + item.quantity;
-            const newCost = totalStock > 0
-              ? (product.current_stock * product.cost_per_unit + item.quantity * item.unit_price) / totalStock
-              : item.unit_price;
-            updateStock.run(item.quantity, newCost, item.product_id);
-            insertMovement.run(item.product_id, product.name, item.quantity, invoiceId, `Factura ${invoice_number || invoiceId}`);
+          if (item.product_id && item.quantity > 0) {
+            const product = getProduct.get(item.product_id);
+            if (product) {
+              const totalStock = product.current_stock + item.quantity;
+              const newCost = totalStock > 0
+                ? (product.current_stock * product.cost_per_unit + item.quantity * item.unit_price) / totalStock
+                : item.unit_price;
+              updateStock.run(item.quantity, newCost, item.product_id);
+              insertMovement.run(item.product_id, product.name, item.quantity, invoiceId, `Factura ${invoice_number || invoiceId}`);
+            }
           }
         }
       }
-    }
+      return invoiceId;
+    });
 
-    return invoiceId;
-  });
-
-  try {
-    const id = transaction();
     res.status(201).json({ id, message: 'Factura registrada correctamente' });
   } catch (err) {
     res.status(500).json({ error: err.message });
