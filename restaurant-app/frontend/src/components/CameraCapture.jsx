@@ -83,7 +83,7 @@ export default function CameraCapture({ onCapture }) {
               📁 Subir archivo
             </button>
           </div>
-          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
+          <input ref={fileInputRef} type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={handleFileChange} />
         </>
       )}
 

@@ -59,6 +59,11 @@ router.post('/ocr', upload.single('image'), async (req, res) => {
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+    const isPdf = mimeType === 'application/pdf';
+    const contentBlock = isPdf
+      ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64Image } }
+      : { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64Image } };
+
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2048,
@@ -89,7 +94,7 @@ Devuelve SOLO el JSON sin ningún texto adicional.`,
         {
           role: 'user',
           content: [
-            { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64Image } },
+            contentBlock,
             { type: 'text', text: 'Analiza esta factura y extrae todos sus datos.' }
           ]
         }
