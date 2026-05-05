@@ -44,7 +44,10 @@ export default function Invoices() {
       setForm(p => ({ ...p, invoice_number: d.invoice_number || '', supplier_id: match?.id || '', supplier_name: d.supplier_name || '', invoice_date: d.invoice_date || today, subtotal: d.subtotal || 0, tax_amount: d.tax_amount || 0, total_amount: d.total || 0, image_path: d.image_path || '', notes: d.notes || '' }));
       setItems((d.items || []).map(i => ({ description: i.description || '', quantity: i.quantity || 0, unit: i.unit || 'ud', unit_price: i.unit_price || 0, total_price: i.total_price || 0, product_id: '' })));
       setOcrDone(true);
-    } catch { setError('No se pudo analizar la imagen. Rellena los datos manualmente.'); }
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || 'Error desconocido';
+      setError(`Error al analizar: ${msg}`);
+    }
     finally { setAnalyzing(false); }
   };
 
