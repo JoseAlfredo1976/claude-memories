@@ -60,12 +60,9 @@ router.post('/ocr', upload.single('image'), async (req, res) => {
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-7',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2048,
-      system: [
-        {
-          type: 'text',
-          text: `Eres un experto en análisis de facturas de proveedores para restaurantes españoles.
+      system: `Eres un experto en análisis de facturas de proveedores para restaurantes españoles.
 Extrae los datos de la factura y devuelve ÚNICAMENTE un JSON válido con esta estructura exacta:
 {
   "supplier_name": "nombre del proveedor",
@@ -88,9 +85,6 @@ Extrae los datos de la factura y devuelve ÚNICAMENTE un JSON válido con esta e
   "notes": "observaciones o null"
 }
 Devuelve SOLO el JSON sin ningún texto adicional.`,
-          cache_control: { type: 'ephemeral' }
-        }
-      ],
       messages: [
         {
           role: 'user',
