@@ -395,14 +395,20 @@ def descargar(rel_path: str):
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    import webbrowser, threading, time
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    is_local = port == 5000
 
-    def open_browser():
-        time.sleep(1.2)
-        webbrowser.open("http://localhost:5000")
+    if is_local:
+        import webbrowser, threading, time
 
-    threading.Thread(target=open_browser, daemon=True).start()
-    print("\n  Generador de Presupuestos – Grupo Europa")
-    print("  Abriendo en el navegador: http://localhost:5000")
-    print("  (Para parar: pulsa Ctrl+C)\n")
-    app.run(host="0.0.0.0", port=5000, debug=False)
+        def open_browser():
+            time.sleep(1.2)
+            webbrowser.open(f"http://localhost:{port}")
+
+        threading.Thread(target=open_browser, daemon=True).start()
+        print(f"\n  Generador de Presupuestos – Grupo Europa")
+        print(f"  Abriendo en el navegador: http://localhost:{port}")
+        print(f"  (Para parar: pulsa Ctrl+C)\n")
+
+    app.run(host="0.0.0.0", port=port, debug=False)
