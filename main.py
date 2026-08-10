@@ -2,8 +2,9 @@
 """
 Buscador de chollos inmobiliarios.
 
-Scrapes Idealista y Fotocasa para detectar propiedades con precio
-significativamente por debajo de la mediana del mercado local.
+Scrapes Idealista, Fotocasa, Engel & Völkers y Gilmar para detectar
+propiedades con precio significativamente por debajo de la mediana del
+mercado local.
 
 Uso responsable: respeta los robots.txt de cada portal y no abuses de las
 peticiones. Este script añade retardos automáticos entre requests.
@@ -14,16 +15,17 @@ import sys
 from typing import List, Optional
 
 import click
-from rich.console import Console
 
 from models import Property, SearchParams
-from scrapers import IdealistaScraper, FotocasaScraper
+from scrapers import IdealistaScraper, FotocasaScraper, EngelVoelkersScraper, GilmarScraper
 from analyzer import analyze, summary_stats
 from output import console, print_results, export_csv, export_json
 
 SOURCES = {
     "idealista": IdealistaScraper,
     "fotocasa": FotocasaScraper,
+    "engelvoelkers": EngelVoelkersScraper,
+    "gilmar": GilmarScraper,
 }
 
 
@@ -34,10 +36,19 @@ SOURCES = {
 @click.option(
     "--source",
     "-S",
-    type=click.Choice(["idealista", "fotocasa", "all"], case_sensitive=False),
+    type=click.Choice(["idealista", "fotocasa", "engelvoelkers", "gilmar", "all"], case_sensitive=False),
     default="all",
     show_default=True,
     help="Portal a scrapear",
+)
+@click.option(
+    "--type",
+    "-T",
+    "property_type",
+    type=click.Choice(["pisos", "casas", "terrenos", "solares"], case_sensitive=False),
+    default="pisos",
+    show_default=True,
+    help="Tipo de propiedad",
 )
 @click.option("--pages", "-n", type=int, default=3, show_default=True, help="Páginas por portal")
 @click.option("--top", "-t", type=int, default=20, show_default=True, help="Número de resultados a mostrar")
@@ -50,6 +61,7 @@ def main(
     max_price: Optional[int],
     min_size: Optional[int],
     source: str,
+    property_type: str,
     pages: int,
     top: int,
     csv_path: Optional[str],
@@ -57,7 +69,7 @@ def main(
     delay: float,
     verbose: bool,
 ) -> None:
-    """Busca chollos inmobiliarios en LOCATION (ej: 'madrid', 'barcelona', 'sevilla')."""
+    """Busca chollos inmobiliarios en LOCATION (ej: 'madrid', 'barcelona', 'mirasierra-madrid')."""
     logging.basicConfig(
         level=logging.DEBUG if verbose else logging.WARNING,
         format="%(levelname)s %(name)s: %(message)s",
@@ -67,6 +79,7 @@ def main(
         location=location,
         max_price=max_price,
         min_size_m2=min_size,
+        property_type=property_type,
         max_pages=pages,
     )
 

@@ -8,13 +8,23 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.fotocasa.es"
 
+# Map property_type → Fotocasa URL segment
+TYPE_PATH = {
+    "terrenos": "terrenos",
+    "solares": "terrenos",
+    "pisos": "viviendas",
+    "casas": "viviendas",
+    "viviendas": "viviendas",
+}
+
 
 class FotocasaScraper(BaseScraper):
     name = "fotocasa"
 
     def _build_url(self, params: SearchParams, page: int = 1) -> str:
         location = params.location.lower().replace(" ", "-")
-        path = f"/es/comprar/viviendas/{location}/todas-las-zonas/l"
+        segment = TYPE_PATH.get(params.property_type.lower(), "viviendas")
+        path = f"/es/comprar/{segment}/{location}/todas-las-zonas/l"
         query_parts = []
         if params.max_price:
             query_parts.append(f"maxPrice={params.max_price}")
@@ -30,7 +40,8 @@ class FotocasaScraper(BaseScraper):
             link_el = card.select_one("a[href*='/es/inmueble/']") or card.select_one("a.re-Card-link")
             if not link_el:
                 return None
-            url = BASE_URL + link_el["href"] if link_el["href"].startswith("/") else link_el["href"]
+            href = link_el.get("href", "")
+            url = BASE_URL + href if href.startswith("/") else href
 
             title_el = card.select_one(".re-Card-title") or card.select_one("h3")
             title = title_el.get_text(strip=True) if title_el else "Sin título"
@@ -77,7 +88,9 @@ class FotocasaScraper(BaseScraper):
             if not soup:
                 break
 
-            cards = soup.select("article.re-CardPackMain, article[class*='Card'], div[class*='CardPack']")
+            cards = soup.select(
+                "article.re-CardPackMain, article[class*='Card'], div[class*='CardPack']"
+            )
             if not cards:
                 logger.info("[fotocasa] No more listings on page %d", page)
                 break

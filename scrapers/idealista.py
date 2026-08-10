@@ -9,13 +9,23 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.idealista.com"
 
+# Map property_type keyword → Idealista URL segment
+TYPE_PATH = {
+    "terrenos": "venta-terrenos",
+    "solares": "venta-terrenos",
+    "pisos": "venta-viviendas",
+    "casas": "venta-viviendas",
+    "viviendas": "venta-viviendas",
+}
+
 
 class IdealistaScraper(BaseScraper):
     name = "idealista"
 
     def _build_url(self, params: SearchParams, page: int = 1) -> str:
         location = params.location.lower().replace(" ", "-")
-        path = f"/venta-viviendas/{location}/"
+        segment = TYPE_PATH.get(params.property_type.lower(), "venta-viviendas")
+        path = f"/{segment}/{location}/"
         query: dict = {"ordenado-por": "precio-asc"}
         if params.max_price:
             query["precio-max"] = params.max_price
