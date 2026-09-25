@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.gilmar.es"
 
-# Gilmar URL segments por tipo
 TYPE_PATH = {
     "terrenos": "solares-terrenos",
     "solares": "solares-terrenos",
@@ -17,25 +16,31 @@ TYPE_PATH = {
     "viviendas": "pisos-apartamentos",
 }
 
-# Normalización de zonas de Madrid conocidas por Gilmar
-ZONE_MAP = {
-    "mirasierra": "mirasierra",
-    "montecarmelo": "montecarmelo",
-    "madrid": "madrid",
-    "barcelona": "barcelona",
-}
+CITIES = {"madrid", "barcelona", "sevilla", "valencia"}
+
+
+def _gilmar_zones(location: str) -> list:
+    """
+    Gilmar usa zonas simples: mirasierra, montecarmelo, madrid, etc.
+    Devuelve lista de zonas a probar en orden.
+    """
+    parts = location.lower().replace(" ", "-").split("-")
+    zones = []
+    for part in parts:
+        if part not in CITIES and len(part) > 3:
+            zones.append(part)
+    for part in parts:
+        if part in CITIES:
+            zones.append(part)
+    return zones or [parts[0]]
 
 
 class GilmarScraper(BaseScraper):
-    """Scraper para Gilmar Consulting Inmobiliario."""
     name = "gilmar"
 
-    def _build_url(self, params: SearchParams, page: int = 1) -> str:
+    def _build_url(self, zone: str, params: SearchParams, page: int = 1) -> str:
         prop_segment = TYPE_PATH.get(params.property_type.lower(), "pisos-apartamentos")
-        # Intentar localizar la zona en la URL de Gilmar
-        location_slug = params.location.lower().replace(" ", "-")
-        path = f"/venta/{prop_segment}/{location_slug}/"
-        query = ""
+        path = f"/venta/{prop_segment}/{zone}/"
         parts = []
         if params.max_price:
             parts.append(f"precio_max={params.max_price}")
@@ -43,8 +48,7 @@ class GilmarScraper(BaseScraper):
             parts.append(f"metros_min={params.min_size_m2}")
         if page > 1:
             parts.append(f"pagina={page}")
-        if parts:
-            query = "?" + "&".join(parts)
+        query = "?" + "&".join(parts) if parts else ""
         return f"{BASE_URL}{path}{query}"
 
     def _parse_card(self, card) -> Optional[Property]:
@@ -67,24 +71,23 @@ class GilmarScraper(BaseScraper):
 
             size_m2: Optional[int] = None
             rooms: Optional[int] = None
-            for detail in card.select(".property-item__feature, [class*='feature'], [class*='detail']"):
+            for detail in card.select(
+                ".property-item__feature, [class*='feature'], [class*='detail']"
+            ):
                 text = detail.get_text(strip=True)
                 if "m²" in text or " m" in text:
                     size_m2 = self._parse_size(text)
                 elif "hab" in text.lower() or "dorm" in text.lower():
                     rooms = self._parse_rooms(text)
 
-            location_el = card.select_one(".property-item__location, [class*='location'], [class*='zona']")
-            location_text = location_el.get_text(strip=True) if location_el else params.location
+            location_el = card.select_one(
+                ".property-item__location, [class*='location'], [class*='zona']"
+            )
+            location_text = location_el.get_text(strip=True) if location_el else ""
 
             return Property(
-                title=title,
-                price=price,
-                size_m2=size_m2,
-                rooms=rooms,
-                location=location_text,
-                url=url,
-                source=self.name,
+                title=title, price=price, size_m2=size_m2, rooms=rooms,
+                location=location_text, url=url, source=self.name,
             )
         except Exception as e:
             logger.debug("Error parsing Gilmar card: %s", e)
@@ -92,27 +95,44 @@ class GilmarScraper(BaseScraper):
 
     def search(self, params: SearchParams) -> List[Property]:
         properties: List[Property] = []
+        zones = _gilmar_zones(params.location)
+        working_zone = None
 
-        for page in range(1, params.max_pages + 1):
-            url = self._build_url(params, page)
-            logger.info("[gilmar] Scraping page %d: %s", page, url)
+        for zone in zones:
+            url = self._build_url(zone, params, page=1)
+            logger.info("[gilmar] Probando zona '%s': %s", zone, url)
+            soup = self._get(url)
+            if not soup:
+                continue
+            cards = soup.select(
+                ".property-item, article[class*='property'], "
+                "div[class*='listing'], .inmueble-item, [class*='inmueble']"
+            )
+            if cards:
+                working_zone = zone
+                for card in cards:
+                    prop = self._parse_card(card)
+                    if prop:
+                        properties.append(prop)
+                break
+
+        if not working_zone:
+            return properties
+
+        for page in range(2, params.max_pages + 1):
+            url = self._build_url(working_zone, params, page=page)
             soup = self._get(url)
             if not soup:
                 break
-
             cards = soup.select(
                 ".property-item, article[class*='property'], "
-                "div[class*='listing'], .inmueble-item"
+                "div[class*='listing'], .inmueble-item, [class*='inmueble']"
             )
             if not cards:
-                logger.info("[gilmar] No listings on page %d", page)
                 break
-
             for card in cards:
                 prop = self._parse_card(card)
                 if prop:
                     properties.append(prop)
-
-            logger.info("[gilmar] Page %d: %d listings so far", page, len(properties))
 
         return properties

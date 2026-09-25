@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.fotocasa.es"
 
-# Map property_type → Fotocasa URL segment
 TYPE_PATH = {
     "terrenos": "terrenos",
     "solares": "terrenos",
@@ -17,14 +16,36 @@ TYPE_PATH = {
     "viviendas": "viviendas",
 }
 
+CITIES = {"madrid", "barcelona", "sevilla", "valencia", "bilbao", "zaragoza", "malaga"}
+
+
+def _fotocasa_slugs(location: str) -> list:
+    """
+    Fotocasa espera '{barrio}-{ciudad}' o '{ciudad}-capital'.
+    Devuelve lista de slugs a probar en orden de especificidad.
+    Ej: 'mirasierra-montecarmelo-madrid'
+        → ['mirasierra-madrid', 'montecarmelo-madrid', 'madrid-capital']
+    """
+    parts = location.lower().replace(" ", "-").split("-")
+    slugs = []
+    if parts[-1] in CITIES:
+        city = parts[-1]
+        neighborhoods = [p for p in parts[:-1] if len(p) > 2]
+        for n in neighborhoods:
+            slugs.append(f"{n}-{city}")
+        slugs.append(f"{city}-capital")
+    else:
+        slugs.append(location.lower().replace(" ", "-"))
+        slugs.append(parts[0])
+    return slugs
+
 
 class FotocasaScraper(BaseScraper):
     name = "fotocasa"
 
-    def _build_url(self, params: SearchParams, page: int = 1) -> str:
-        location = params.location.lower().replace(" ", "-")
+    def _build_url(self, slug: str, params: SearchParams, page: int = 1) -> str:
         segment = TYPE_PATH.get(params.property_type.lower(), "viviendas")
-        path = f"/es/comprar/{segment}/{location}/todas-las-zonas/l"
+        path = f"/es/comprar/{segment}/{slug}/todas-las-zonas/l"
         query_parts = []
         if params.max_price:
             query_parts.append(f"maxPrice={params.max_price}")
@@ -66,13 +87,8 @@ class FotocasaScraper(BaseScraper):
             location_text = location_el.get_text(strip=True) if location_el else ""
 
             return Property(
-                title=title,
-                price=price,
-                size_m2=size_m2,
-                rooms=rooms,
-                location=location_text,
-                url=url,
-                source=self.name,
+                title=title, price=price, size_m2=size_m2, rooms=rooms,
+                location=location_text, url=url, source=self.name,
             )
         except Exception as e:
             logger.debug("Error parsing card: %s", e)
@@ -80,26 +96,42 @@ class FotocasaScraper(BaseScraper):
 
     def search(self, params: SearchParams) -> List[Property]:
         properties: List[Property] = []
+        slugs = _fotocasa_slugs(params.location)
+        working_slug = None
 
-        for page in range(1, params.max_pages + 1):
-            url = self._build_url(params, page)
-            logger.info("[fotocasa] Scraping page %d: %s", page, url)
+        for slug in slugs:
+            url = self._build_url(slug, params, page=1)
+            logger.info("[fotocasa] Probando slug '%s': %s", slug, url)
+            soup = self._get(url)
+            if not soup:
+                continue
+            cards = soup.select(
+                "article.re-CardPackMain, article[class*='Card'], div[class*='CardPack']"
+            )
+            if cards:
+                working_slug = slug
+                for card in cards:
+                    prop = self._parse_card(card)
+                    if prop:
+                        properties.append(prop)
+                break
+
+        if not working_slug:
+            return properties
+
+        for page in range(2, params.max_pages + 1):
+            url = self._build_url(working_slug, params, page=page)
             soup = self._get(url)
             if not soup:
                 break
-
             cards = soup.select(
                 "article.re-CardPackMain, article[class*='Card'], div[class*='CardPack']"
             )
             if not cards:
-                logger.info("[fotocasa] No more listings on page %d", page)
                 break
-
             for card in cards:
                 prop = self._parse_card(card)
                 if prop:
                     properties.append(prop)
-
-            logger.info("[fotocasa] Page %d: %d listings so far", page, len(properties))
 
         return properties
