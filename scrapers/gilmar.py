@@ -60,7 +60,7 @@ class GilmarScraper(BaseScraper):
             url = href if href.startswith("http") else BASE_URL + href
 
             title_el = card.select_one(".property-item__title, h2, h3, .property-title")
-            title = title_el.get_text(strip=True) if title_el else "Sin título"
+            title = title_el.get_text(strip=True) if title_el else "Sin titulo"
 
             price_el = card.select_one(".property-item__price, [class*='price'], .precio")
             if not price_el:
@@ -75,7 +75,7 @@ class GilmarScraper(BaseScraper):
                 ".property-item__feature, [class*='feature'], [class*='detail']"
             ):
                 text = detail.get_text(strip=True)
-                if "m²" in text or " m" in text:
+                if "m2" in text or " m" in text:
                     size_m2 = self._parse_size(text)
                 elif "hab" in text.lower() or "dorm" in text.lower():
                     rooms = self._parse_rooms(text)

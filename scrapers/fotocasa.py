@@ -24,7 +24,7 @@ def _fotocasa_slugs(location: str) -> list:
     Fotocasa espera '{barrio}-{ciudad}' o '{ciudad}-capital'.
     Devuelve lista de slugs a probar en orden de especificidad.
     Ej: 'mirasierra-montecarmelo-madrid'
-        → ['mirasierra-madrid', 'montecarmelo-madrid', 'madrid-capital']
+        -> ['mirasierra-madrid', 'montecarmelo-madrid', 'madrid-capital']
     """
     parts = location.lower().replace(" ", "-").split("-")
     slugs = []
@@ -65,7 +65,7 @@ class FotocasaScraper(BaseScraper):
             url = BASE_URL + href if href.startswith("/") else href
 
             title_el = card.select_one(".re-Card-title") or card.select_one("h3")
-            title = title_el.get_text(strip=True) if title_el else "Sin título"
+            title = title_el.get_text(strip=True) if title_el else "Sin titulo"
 
             price_el = card.select_one(".re-CardPrice") or card.select_one("[class*='price']")
             if not price_el:
@@ -78,7 +78,7 @@ class FotocasaScraper(BaseScraper):
             rooms: Optional[int] = None
             for feat in card.select(".re-CardFeatures-feature, [class*='feature'], li"):
                 text = feat.get_text(strip=True)
-                if "m²" in text or " m" in text:
+                if "m2" in text or " m" in text:
                     size_m2 = self._parse_size(text)
                 elif "hab" in text.lower() or "dorm" in text.lower():
                     rooms = self._parse_rooms(text)
