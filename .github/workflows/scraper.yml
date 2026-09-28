@@ -1,0 +1,62 @@
+name: Buscar chollos inmobiliarios
+
+on:
+  schedule:
+    # Ejecutar cada día a las 7:00 Madrid (6:00 UTC)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      location:
+        description: 'Ubicación (ej: mirasierra-madrid)'
+        required: false
+        default: 'mirasierra-montecarmelo-madrid'
+      property_type:
+        description: 'Tipo de propiedad'
+        required: false
+        default: 'terrenos'
+        type: choice
+        options: [terrenos, pisos, casas, solares]
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/build-scraping-tool-fKKkz
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Ejecutar scraper
+        run: |
+          LOCATION="${{ github.event.inputs.location || 'mirasierra-montecarmelo-madrid' }}"
+          TYPE="${{ github.event.inputs.property_type || 'terrenos' }}"
+          python main.py "$LOCATION" \
+            --type "$TYPE" \
+            --source all \
+            --pages 4 \
+            --top 50 \
+            --export-json docs/resultados.json \
+            --delay 4 \
+          || echo "Scraper terminó con advertencias"
+
+      - name: Generar página HTML
+        run: python generate_report.py
+
+      - name: Publicar en GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
+
+      - name: Deploy Pages
+        uses: actions/deploy-pages@v4
