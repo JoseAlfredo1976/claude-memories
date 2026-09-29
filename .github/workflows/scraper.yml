@@ -2,8 +2,7 @@ name: Buscar chollos inmobiliarios
 
 on:
   schedule:
-    # Ejecutar cada día a las 7:00 Madrid (6:00 UTC)
-    - cron: '0 6 * * *'
+    - cron: '0 6 * * *'   # Todos los días a las 7:00 Madrid (6 UTC)
   workflow_dispatch:
     inputs:
       location:
@@ -25,6 +24,10 @@ jobs:
       pages: write
       id-token: write
 
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,17 +41,20 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Ejecutar scraper
+        env:
+          SCRAPER_API_KEY: ${{ secrets.SCRAPER_API_KEY }}
         run: |
           LOCATION="${{ github.event.inputs.location || 'mirasierra-montecarmelo-madrid' }}"
           TYPE="${{ github.event.inputs.property_type || 'terrenos' }}"
+          mkdir -p docs
           python main.py "$LOCATION" \
             --type "$TYPE" \
             --source all \
             --pages 4 \
             --top 50 \
             --export-json docs/resultados.json \
-            --delay 4 \
-          || echo "Scraper terminó con advertencias"
+            --delay 2 \
+          || echo "Scraper terminó (puede haber advertencias)"
 
       - name: Generar página HTML
         run: python generate_report.py
@@ -59,4 +65,5 @@ jobs:
           path: docs/
 
       - name: Deploy Pages
+        id: deploy
         uses: actions/deploy-pages@v4
